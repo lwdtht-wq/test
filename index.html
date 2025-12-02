@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mosaic of Faith – Singapore Religion Visualization</title>
+
+<!-- D3.js + Leaflet -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* ---------------- GLOBAL THEME: Black-Gold Arcane ---------------- */
+body {
+    margin: 0;
+    font-family: "Cinzel", serif;
+    background: #0d0d0f;
+    color: #f6d98a;
+}
+
+/* Scroll Navigation */
+nav {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 210px;
+    height: 100vh;
+    background: rgba(20,20,22,0.9);
+    border-right: 1px solid rgba(255,215,130,0.4);
+    padding: 20px;
+    box-shadow: 3px 0px 18px rgba(255,215,130,0.15);
+}
+
+nav a {
+    display: block;
+    padding: 10px 6px;
+    margin-bottom: 8px;
+    color: #f6d98a;
+    text-decoration: none;
+    font-size: 15px;
+    border-left: 2px solid transparent;
+    transition: 0.3s;
+}
+nav a:hover {
+    border-left: 2px solid #f6d98a;
+    background: rgba(255,215,130,0.1);
+}
+
+/* CONTENT WRAPPER */
+.section {
+    margin-left: 260px;
+    padding: 60px 40px;
+}
+
+/* Title */
+h1 {
+    text-align: center;
+    font-size: 38px;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+    color: #f9e3b0;
+}
+
+/* Panels */
+.panel {
+    background: rgba(30,30,32,0.9);
+    border: 1px solid rgba(255,215,130,0.25);
+    box-shadow: 0px 0px 25px rgba(255,215,130,0.15);
+    padding: 25px;
+    border-radius: 18px;
+    margin-bottom: 60px;
+}
+
+/* Chart containers */
+svg { display: block; margin: auto; }
+
+/* Buttons */
+button {
+    background: rgba(255,215,130,0.12);
+    color: #f6d98a;
+    border: 1px solid #f6d98a;
+    padding: 10px 16px;
+    margin: 4px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+button:hover { background: rgba(255,215,130,0.25); }
+
+/* Map box */
+#map {
+    width: 100%;
+    height: 480px;
+    border-radius: 20px;
+    margin-top: 20px;
+}
+
+/* Timeline boxes */
+.timeline-box {
+    width: 200px;
+    margin: 10px auto;
+    padding: 12px;
+    border: 1px solid rgba(255,215,130,0.3);
+    background: rgba(255,215,130,0.08);
+    border-radius: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ------------------ NAVIGATION ------------------ -->
+<nav>
+    <h2 style="color:#f9e3b0;">Mosaic of Faith</h2>
+    <a href="#home">🏠 Home</a>
+    <a href="#composition">🟡 Religious Composition</a>
+    <a href="#age">🟡 Age & No Religion</a>
+    <a href="#trend">🟡 Religion Trends</a>
+    <a href="#ethnicity">🟡 Ethnicity × Religion</a>
+    <a href="#mapSection">🟡 Religious Map</a>
+    <a href="#timeline">🟡 Festival Timeline</a>
+</nav>
+
+<!-- ------------------ HOME ------------------ -->
+<div id="home" class="section">
+    <h1>Singapore Religion Visualization</h1>
+    <div class="panel">
+        <p style="text-align:center; font-size:18px;">
+            An Arcane-style Interactive Data Visualization <br>
+            Based on Singapore Census 2020 & Official Religious Boards
+        </p>
+    </div>
+</div>
+<!-- ========================================================= -->
+<!-- =============== SECTION 2: RELIGIOUS COMPOSITION ========= -->
+<!-- ========================================================= -->
+<div id="composition" class="section">
+    <h1>Religious Composition (Census 2020)</h1>
+
+    <div class="panel">
+        <svg id="pieChart" width="480" height="480"></svg>
+    </div>
+
+    <div class="panel">
+        <h2 style="text-align:center;">Key Insights</h2>
+        <ul>
+            <li>Buddhism remains the largest religion (31.1%).</li>
+            <li>No Religion shows strong rise (20%).</li>
+            <li>Christianity continues trending upward.</li>
+            <li>Taoism continues long-term decline.</li>
+        </ul>
+    </div>
+</div>
+
+
+<!-- ========================================================= -->
+<!-- =============== SECTION 3: AGE & NO RELIGION ============= -->
+<!-- ========================================================= -->
+<div id="age" class="section">
+    <h1>No Religion Across Age Groups</h1>
+
+    <div class="panel">
+        <div style="text-align:center;">
+            <button onclick="updateAgeBars('2010')">2010</button>
+            <button onclick="updateAgeBars('2020')">2020</button>
+        </div>
+        <svg id="ageBar" width="600" height="400"></svg>
+    </div>
+
+    <div class="panel">
+        <h2 style="text-align:center;">Heatmap (2010 vs 2020)</h2>
+        <svg id="ageHeatmap" width="600" height="350"></svg>
+    </div>
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- =============== SECTION 4: RELIGION TRENDS =============== -->
+<!-- ========================================================= -->
+<div id="trend" class="section">
+    <h1>Trends of Major Religions (1980 → 2020)</h1>
+
+    <div class="panel">
+        <div style="text-align:center; margin-bottom:15px;">
+            <label><input type="checkbox" checked onclick="toggleTrend('Buddhism')"> Buddhism</label>
+            <label><input type="checkbox" checked onclick="toggleTrend('Christianity')"> Christianity</label>
+            <label><input type="checkbox" checked onclick="toggleTrend('Islam')"> Islam</label>
+            <label><input type="checkbox" checked onclick="toggleTrend('Hinduism')"> Hinduism</label>
+            <label><input type="checkbox" checked onclick="toggleTrend('NoReligion')"> No Religion</label>
+        </div>
+        <svg id="trendSVG" width="760" height="450"></svg>
+    </div>
+
+</div>
+<!-- ========================================================= -->
+<!-- =================== SECTION 5: ETHNICITY ================= -->
+<!-- ========================================================= -->
+<div id="ethnicity" class="section">
+    <h1>Ethnicity × Religion (Census 2020)</h1>
+
+    <div class="panel">
+        <svg id="ethnicityStack" width="760" height="450"></svg>
+    </div>
+
+    <div class="panel">
+        <h2 style="text-align:center;">Ethnic Composition (2020)</h2>
+        <svg id="ethnicityPie" width="380" height="380"></svg>
+    </div>
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- =================== SECTION 6: MAP ======================= -->
+<!-- ========================================================= -->
+<div id="mapSection" class="section">
+    <h1>Map of Religious Sites in Singapore</h1>
+
+    <div class="panel">
+        <div id="map"></div>
+    </div>
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- =================== SECTION 7: TIMELINE ================== -->
+<!-- ========================================================= -->
+<div id="timeline" class="section">
+    <h1>Religious Festivals Timeline</h1>
+
+    <div class="panel">
+        <svg id="timelineSVG" width="900" height="260"></svg>
+    </div>
+
+    <div class="panel">
+        <div class="timeline-box"><b>Chinese New Year</b>: Lunar new year celebrations</div>
+        <div class="timeline-box"><b>Hari Raya Aidilfitri</b>: End of Ramadan</div>
+        <div class="timeline-box"><b>Vesak Day</b>: Buddha’s birth & enlightenment</div>
+        <div class="timeline-box"><b>Deepavali</b>: Festival of Lights</div>
+    </div>
+</div>
+
+
+
+<!-- ========================================================= -->
+<!-- ======================== SCRIPTS ========================= -->
+<!-- ========================================================= -->
+<script>
+/* =========================================================
+   PIE CHART (Religious Composition)
+   ========================================================= */
+const religionData = [
+  { religion:"Buddhism", val:31.1 },
+  { religion:"Taoism", val:8.8 },
+  { religion:"Christianity", val:18.9 },
+  { religion:"Islam", val:15.6 },
+  { religion:"Hinduism", val:5.0 },
+  { religion:"Other", val:0.6 },
+  { religion:"No Religion", val:20.0 }
+];
+
+const pieSVG = d3.select("#pieChart")
+    .append("g")
+    .attr("transform","translate(240,240)");
+
+const pie = d3.pie().value(d=>d.val);
+const arc = d3.arc().innerRadius(70).outerRadius(200);
+
+const pieColor = d3.scaleOrdinal([
+  "#f6d98a","#d8b46a","#c49b5a","#b08745",
+  "#9c7834","#fce7b2","#f1d08f"
+]);
+
+pieSVG.selectAll("path")
+    .data(pie(religionData))
+    .enter().append("path")
+    .attr("fill",d=>pieColor(d.data.religion))
+    .transition().duration(1000)
+    .attrTween("d", function(d){
+        let i = d3.interpolate({startAngle:0,endAngle:0}, d);
+        return t => arc(i(t));
+    });
+
+pieSVG.selectAll("text")
+    .data(pie(religionData))
+    .enter()
+    .append("text")
+    .text(d=>`${d.data.religion}: ${d.data.val}%`)
+    .attr("transform",d=>`translate(${arc.centroid(d)})`)
+    .attr("fill","#fbe7b0")
+    .attr("font-size","12px");
+
+
+
+/* =========================================================
+   AGE BAR CHART
+   ========================================================= */
+const ageData = [
+  { age:"15-24", y2010:21.0, y2020:24.2 },
+  { age:"25-34", y2010:19.9, y2020:26.2 },
+  { age:"35-44", y2010:18.0, y2020:22.3 },
+  { age:"45-54", y2010:14.6, y2020:18.3 },
+  { age:"55+",   y2010:13.4, y2020:15.2 }
+];
+
+const ageSVG = d3.select("#ageBar");
+const AW=600, AH=400;
+const ax = d3.scaleBand().domain(ageData.map(d=>d.age))
+    .range([60, AW-40]).padding(0.3);
+const ay = d3.scaleLinear().domain([0,30]).range([AH-40,40]);
+
+ageSVG.append("g").attr("transform",`translate(0,${AH-40})`)
+    .call(d3.axisBottom(ax));
+ageSVG.append("g").attr("transform","translate(60,0)")
+    .call(d3.axisLeft(ay));
+
+const bars = ageSVG.selectAll("rect")
+    .data(ageData).enter()
+    .append("rect")
+    .attr("x", d=>ax(d.age))
+    .attr("width", ax.bandwidth())
+    .attr("fill","#f1d08f");
+
+function updateAgeBars(year){
+    bars.transition().duration(800)
+        .attr("y", d=>ay(d["y"+year]))
+        .attr("height", d=> (AH-40) - ay(d["y"+year]));
+}
+updateAgeBars("2020");
+
+
+
+/* =========================================================
+   AGE HEATMAP
+   ========================================================= */
+const heatSVG = d3.select("#ageHeatmap");
+const Hx = d3.scaleBand().domain(["2010","2020"]).range([100,500]);
+const Hy = d3.scaleBand().domain(ageData.map(d=>d.age)).range([40,300]);
+const Hcolor = d3.scaleLinear().domain([10,30]).range(["#8b6e3a","#f6d98a"]);
+
+ageData.forEach(row=>{
+    ["y2010","y2020"].forEach((yr,i)=>{
+        heatSVG.append("rect")
+            .attr("x", Hx(i===0?"2010":"2020"))
+            .attr("y", Hy(row.age))
+            .attr("width", Hx.bandwidth())
+            .attr("height", Hy.bandwidth())
+            .attr("fill", Hcolor(row[yr]));
+        heatSVG.append("text")
+            .attr("x", Hx(i===0?"2010":"2020")+Hx.bandwidth()/2)
+            .attr("y", Hy(row.age)+Hy.bandwidth()/2+5)
+            .attr("fill","#fff")
+            .attr("text-anchor","middle")
+            .text(row[yr]+"%");
+    });
+});
+
+
+
+/* =========================================================
+   TREND LINE CHART
+   ========================================================= */
+const trendData = [
+    { year:1980, Buddhism:27, Christianity:10.3, Islam:14.9, Hinduism:3.3, NoReligion:13 },
+    { year:1990, Buddhism:31.2, Christianity:12.7, Islam:14.3, Hinduism:3.7, NoReligion:13.2 },
+    { year:2000, Buddhism:42.5, Christianity:14.6, Islam:14.9, Hinduism:4.0, NoReligion:14.8 },
+    { year:2010, Buddhism:33.3, Christianity:18.3, Islam:14.7, Hinduism:5.1, NoReligion:17.0 },
+    { year:2020, Buddhism:31.1, Christianity:18.9, Islam:15.6, Hinduism:5.0, NoReligion:20.0 }
+];
+
+const tSVG = d3.select("#trendSVG");
+const TW=760, TH=450;
+
+const tx = d3.scaleLinear().domain([1980,2020]).range([60,TW-40]);
+const ty = d3.scaleLinear().domain([0,50]).range([TH-40,40]);
+
+tSVG.append("g").attr("transform",`translate(0,${TH-40})`).call(d3.axisBottom(tx).tickFormat(d3.format("d")));
+tSVG.append("g").attr("transform","translate(60,0)").call(d3.axisLeft(ty));
+
+const trendColors = {
+    Buddhism:"#f6d98a",
+    Christianity:"#d8b46a",
+    Islam:"#b08745",
+    Hinduism:"#9c7834",
+    NoReligion:"#fce7b2"
+};
+
+const trendKeys = Object.keys(trendColors);
+
+const trendLine = d3.line().x(d=>tx(d.year)).y(d=>ty(d.value));
+
+let trendSeries = trendKeys.map(key=>{
+    const vals = trendData.map(d=>({year:d.year, value:d[key]}));
+    return {
+        key,
+        path: tSVG.append("path")
+            .datum(vals)
+            .attr("fill","none")
+            .attr("stroke",trendColors[key])
+            .attr("stroke-width",3)
+            .attr("d",trendLine)
+    };
+});
+
+function toggleTrend(key){
+    let series = trendSeries.find(s=>s.key===key);
+    let now = series.path.attr("opacity")==1 ? 0 : 1;
+    series.path.transition().duration(400).attr("opacity",now);
+}
+
+
+
+/* =========================================================
+   ETHNICITY STACKED BAR
+   ========================================================= */
+const ethData = [
+    { ethnicity:"Chinese", Buddhism:33.2, Taoism:9.9, Christianity:20.4, Islam:0.4,  Hinduism:0.2, NoReligion:26.0, Other:0.6 },
+    { ethnicity:"Malay",   Buddhism:0.3,  Taoism:0.1, Christianity:10.0,Islam:84.0, Hinduism:0.1, NoReligion:3.5,  Other:0.2 },
+    { ethnicity:"Indian",  Buddhism:0.4,  Taoism:0.1, Christianity:12.6,Islam:24.0, Hinduism:57.3,NoReligion:4.0, Other:1.6 },
+    { ethnicity:"Others",  Buddhism:2.0,  Taoism:1.0, Christianity:28.0,Islam:10.0, Hinduism:2.5, NoReligion:52.0,Other:4.5 }
+];
+
+const ethSVG = d3.select("#ethnicityStack");
+const EW=760, EH=450;
+
+const ex = d3.scaleBand().domain(ethData.map(d=>d.ethnicity))
+    .range([60, EW-40]).padding(0.3);
+const ey = d3.scaleLinear().domain([0,100]).range([EH-40,40]);
+
+ethSVG.append("g").attr("transform",`translate(0,${EH-40})`).call(d3.axisBottom(ex));
+ethSVG.append("g").attr("transform","translate(60,0)").call(d3.axisLeft(ey));
+
+const eKeys = ["Buddhism","Taoism","Christianity","Islam","Hinduism","NoReligion","Other"];
+const eColors = {
+  Buddhism:"#f6d98a",
+  Taoism:"#d8b46a",
+  Christianity:"#c49b5a",
+  Islam:"#b08745",
+  Hinduism:"#9c7834",
+  NoReligion:"#fce7b2",
+  Other:"#7a5c32"
+};
+
+const stack = d3.stack().keys(eKeys);
+stack(ethData).forEach(series=>{
+    ethSVG.append("g").attr("fill",eColors[series.key])
+        .selectAll("rect")
+        .data(series).enter()
+        .append("rect")
+        .attr("x",d=>ex(d.data.ethnicity))
+        .attr("y",d=>ey(d[1]))
+        .attr("height",d=>ey(d[0]) - ey(d[1]))
+        .attr("width",ex.bandwidth());
+});
+
+
+
+/* =========================================================
+   ETHNICITY PIE
+   ========================================================= */
+const ethPieSVG = d3.select("#ethnicityPie").append("g")
+    .attr("transform","translate(190,190)");
+
+const ethPieData = [
+    { group:"Chinese", value:74.3 },
+    { group:"Malay", value:13.5 },
+    { group:"Indian", value:9.0 },
+    { group:"Others", value:3.2 }
+];
+
+const ethPie = d3.pie().value(d=>d.value);
+const ethArc = d3.arc().innerRadius(60).outerRadius(140);
+
+ethPieSVG.selectAll("path")
+    .data(ethPie(ethPieData))
+    .enter().append("path")
+    .attr("fill", (d,i)=>["#f6d98a","#d8b46a","#b69a6a","#7a5c32"][i])
+    .attr("d",ethArc);
+
+ethPieSVG.selectAll("text")
+    .data(ethPie(ethPieData))
+    .enter().append("text")
+    .attr("transform", d=>`translate(${ethArc.centroid(d)})`)
+    .attr("text-anchor","middle")
+    .attr("fill","#fff")
+    .text(d=>`${d.data.group} (${d.data.value}%)`);
+
+
+
+
+/* =========================================================
+   RELIGIOUS MAP (Leaflet)
+   ========================================================= */
+const map = L.map("map", {scrollWheelZoom:true}).setView([1.3521,103.8198],12);
+
+L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=6AvT-Rp7tuT1A5uYWm4y7e8tnHQgDZ1ssqrGh89q7KQfuvZmuJMpqJj0YZqdw2Kc',{
+}).addTo(map);
+
+const mapIcons = {
+    temple: L.divIcon({className:"", html:"🔱", iconSize:[26,26]}),
+    mosque: L.divIcon({className:"", html:"🕌", iconSize:[26,26]}),
+    church: L.divIcon({className:"", html:"⛪", iconSize:[26,26]}),
+    hindu:  L.divIcon({className:"", html:"🕉️", iconSize:[26,26]})
+};
+
+const sites = [
+    {name:"Buddha Tooth Relic Temple", type:"temple", lat:1.2814, lng:103.8443},
+    {name:"Thian Hock Keng Temple", type:"temple", lat:1.2804, lng:103.8480},
+    {name:"Sultan Mosque", type:"mosque", lat:1.3028, lng:103.8591},
+    {name:"St Andrew’s Cathedral", type:"church", lat:1.2924, lng:103.8525},
+    {name:"Sri Mariamman Temple", type:"hindu", lat:1.2831, lng:103.8447},
+    {name:"Sri Veeramakaliamman Temple", type:"hindu", lat:1.3066, lng:103.8497},
+];
+
+sites.forEach(s=>{
+    L.marker([s.lat,s.lng], {icon: mapIcons[s.type]})
+        .addTo(map)
+        .bindPopup(`<b>${s.name}</b><br>${s.type}`);
+});
+
+
+
+/* =========================================================
+   TIMELINE
+   ========================================================= */
+const festivals = [
+  {name:"Chinese New Year", date:"Jan", emoji:"🧧", x:100},
+  {name:"Hari Raya", date:"Apr", emoji:"🕌", x:300},
+  {name:"Vesak Day", date:"May", emoji:"🪷", x:500},
+  {name:"Deepavali", date:"Nov", emoji:"🪔", x:700}
+];
+
+const tlSVG = d3.select("#timelineSVG");
+
+tlSVG.append("line")
+    .attr("x1",80).attr("x2",820)
+    .attr("y1",130).attr("y2",130)
+    .attr("stroke","#f6d98a").attr("stroke-width",3);
+
+festivals.forEach(f=>{
+    tlSVG.append("circle")
+        .attr("cx",f.x).attr("cy",130).attr("r",12)
+        .attr("fill","#f6d98a")
+        .style("filter","drop-shadow(0 0 6px rgba(255,215,130,1))");
+
+    tlSVG.append("text")
+        .attr("x",f.x).attr("y",110)
+        .attr("text-anchor","middle")
+        .attr("fill","#fbe7b0")
+        .text(`${f.emoji} ${f.name}`);
+
+    tlSVG.append("text")
+        .attr("x",f.x).attr("y",160)
+        .attr("text-anchor","middle")
+        .attr("fill","#c8a66a")
+        .text(f.date);
+});
+</script>
+
+</body>
+</html>
