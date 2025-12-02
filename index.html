@@ -1,199 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Mosaic of Faith – Singapore Religion Visualization</title>
+<meta charset="UTF-8" />
+<title>Singapore Religion Visualization · Black & Gold Magical Scroll Edition</title>
 
-<!-- D3.js + Leaflet -->
+<!-- D3 & Leaflet -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
 <style>
-/* ---------------- GLOBAL THEME: Black-Gold Arcane ---------------- */
+/* -------------------- GLOBAL STYLE -------------------- */
 body {
     margin: 0;
-    font-family: "Cinzel", serif;
     background: #0d0d0f;
+    font-family: "Cinzel", "Georgia", serif;
     color: #f6d98a;
 }
 
-/* Scroll Navigation */
-nav {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 210px;
-    height: 100vh;
-    background: rgba(20,20,22,0.9);
-    border-right: 1px solid rgba(255,215,130,0.4);
-    padding: 20px;
-    box-shadow: 3px 0px 18px rgba(255,215,130,0.15);
-}
-
-nav a {
-    display: block;
-    padding: 10px 6px;
-    margin-bottom: 8px;
-    color: #f6d98a;
-    text-decoration: none;
-    font-size: 15px;
-    border-left: 2px solid transparent;
-    transition: 0.3s;
-}
-nav a:hover {
-    border-left: 2px solid #f6d98a;
-    background: rgba(255,215,130,0.1);
-}
-
-/* CONTENT WRAPPER */
-.section {
-    margin-left: 260px;
-    padding: 60px 40px;
+/* Scroll effect */
+html {
+  scroll-behavior: smooth;
 }
 
 /* Title */
 h1 {
     text-align: center;
-    font-size: 38px;
-    letter-spacing: 2px;
-    margin-bottom: 25px;
-    color: #f9e3b0;
+    font-size: 40px;
+    letter-spacing: 3px;
+    margin: 40px 0 20px;
+    text-shadow: 0 0 20px rgba(255,215,130,0.35);
 }
 
-/* Panels */
+/* Section */
+.section {
+    padding: 60px 60px;
+    border-bottom: 1px solid rgba(255,220,150,0.15);
+}
+
+/* Panel box */
 .panel {
-    background: rgba(30,30,32,0.9);
-    border: 1px solid rgba(255,215,130,0.25);
-    box-shadow: 0px 0px 25px rgba(255,215,130,0.15);
-    padding: 25px;
-    border-radius: 18px;
-    margin-bottom: 60px;
-}
-
-/* Chart containers */
-svg { display: block; margin: auto; }
-
-/* Buttons */
-button {
-    background: rgba(255,215,130,0.12);
-    color: #f6d98a;
-    border: 1px solid #f6d98a;
-    padding: 10px 16px;
-    margin: 4px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-button:hover { background: rgba(255,215,130,0.25); }
-
-/* Map box */
-#map {
-    width: 100%;
-    height: 480px;
+    background: linear-gradient(145deg,#1a1a1d,#080808);
+    border: 1px solid rgba(255,220,150,0.25);
     border-radius: 20px;
-    margin-top: 20px;
+    padding: 30px;
+    box-shadow: 0 0 25px rgba(255,215,130,0.2),
+                inset 0 0 8px rgba(255,205,120,0.08);
+    margin: 30px auto;
+    max-width: 900px;
 }
 
-/* Timeline boxes */
+/* Navigation bar */
+nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: rgba(10,10,12,0.9);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,215,130,0.25);
+    z-index: 999;
+}
+
+nav a {
+    color: #f6d98a;
+    margin: 0 18px;
+    font-size: 16px;
+    text-decoration: none;
+    transition: 0.25s;
+}
+
+nav a:hover {
+    color: #fff3c8;
+    text-shadow: 0 0 8px #f6d98a;
+}
+
+/* Tooltip */
+.tooltip {
+  position: fixed;
+  background: #1a1a1d;
+  border: 1px solid #f6d98a;
+  padding: 10px 12px;
+  border-radius: 10px;
+  pointer-events: none;
+  color: #f6d98a;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Map */
+#map {
+  height: 480px;
+  border-radius: 15px;
+}
+
+/* Timeline styling */
 .timeline-box {
-    width: 200px;
-    margin: 10px auto;
-    padding: 12px;
-    border: 1px solid rgba(255,215,130,0.3);
+    padding: 12px 20px;
     background: rgba(255,215,130,0.08);
+    border: 1px solid rgba(255,215,130,0.25);
     border-radius: 10px;
+    margin: 12px 0;
 }
 </style>
-
 </head>
+
+
 <body>
 
-<!-- ------------------ NAVIGATION ------------------ -->
+<!-- ==================== NAVIGATION ==================== -->
 <nav>
-    <h2 style="color:#f9e3b0;">Mosaic of Faith</h2>
-    <a href="#home">🏠 Home</a>
-    <a href="#composition">🟡 Religious Composition</a>
-    <a href="#age">🟡 Age & No Religion</a>
-    <a href="#trend">🟡 Religion Trends</a>
-    <a href="#ethnicity">🟡 Ethnicity × Religion</a>
-    <a href="#mapSection">🟡 Religious Map</a>
-    <a href="#timeline">🟡 Festival Timeline</a>
+    <a href="#intro">Home</a>
+    <a href="#pie">Religious Composition</a>
+    <a href="#age">Age Visualisation</a>
+    <a href="#trend">Trend Lines</a>
+    <a href="#ethnicity">Ethnic Groups</a>
+    <a href="#mapSection">Religious Map</a>
+    <a href="#timeline">Festival Timeline</a>
 </nav>
 
-<!-- ------------------ HOME ------------------ -->
-<div id="home" class="section">
-    <h1>Singapore Religion Visualization</h1>
+
+
+<!-- ========================================================= -->
+<!-- ====================== SECTION 1: HOME ================== -->
+<!-- ========================================================= -->
+<div id="intro" class="section">
+    <h1>Singapore Religion Data Visualisation<br>Black & Gold Magical Scroll Edition</h1>
+
     <div class="panel">
-        <p style="text-align:center; font-size:18px;">
-            An Arcane-style Interactive Data Visualization <br>
-            Based on Singapore Census 2020 & Official Religious Boards
+        <p style="font-size:18px; line-height:1.8;">
+            This webpage visualises key insights from Singapore’s Census 2020, focusing on religious distribution,
+            age-based changes, long-term trends, ethnic differences, locations of major worship sites, and festival timing.
+            <br><br>
+            All charts are rendered in a magical black-and-gold theme with animations, transitions and interactive elements.
         </p>
     </div>
 </div>
+
+
+
 <!-- ========================================================= -->
-<!-- =============== SECTION 2: RELIGIOUS COMPOSITION ========= -->
+<!-- ====================== SECTION 2: PIE =================== -->
 <!-- ========================================================= -->
-<div id="composition" class="section">
-    <h1>Religious Composition (Census 2020)</h1>
+<div id="pie" class="section">
+    <h1>Religious Composition (2020)</h1>
 
     <div class="panel">
         <svg id="pieChart" width="480" height="480"></svg>
     </div>
-
-    <div class="panel">
-        <h2 style="text-align:center;">Key Insights</h2>
-        <ul>
-            <li>Buddhism remains the largest religion (31.1%).</li>
-            <li>No Religion shows strong rise (20%).</li>
-            <li>Christianity continues trending upward.</li>
-            <li>Taoism continues long-term decline.</li>
-        </ul>
-    </div>
 </div>
-
-
 <!-- ========================================================= -->
-<!-- =============== SECTION 3: AGE & NO RELIGION ============= -->
+<!-- =================== SECTION 3: AGE ======================= -->
 <!-- ========================================================= -->
 <div id="age" class="section">
-    <h1>No Religion Across Age Groups</h1>
+    <h1>No Religion by Age Group<br>(Heatmap + Bar Switch)</h1>
+
+    <!-- Bar chart buttons -->
+    <div class="panel" style="text-align:center;">
+        <button onclick="updateAgeBars('2010')">2010</button>
+        <button onclick="updateAgeBars('2020')">2020</button>
+    </div>
 
     <div class="panel">
-        <div style="text-align:center;">
-            <button onclick="updateAgeBars('2010')">2010</button>
-            <button onclick="updateAgeBars('2020')">2020</button>
-        </div>
         <svg id="ageBar" width="600" height="400"></svg>
     </div>
 
     <div class="panel">
-        <h2 style="text-align:center;">Heatmap (2010 vs 2020)</h2>
-        <svg id="ageHeatmap" width="600" height="350"></svg>
+        <h2 style="text-align:center;">Age Heatmap</h2>
+        <svg id="ageHeatmap" width="650" height="380"></svg>
     </div>
 </div>
 
 
 
+
 <!-- ========================================================= -->
-<!-- =============== SECTION 4: RELIGION TRENDS =============== -->
+<!-- =================== SECTION 4: TREND ===================== -->
 <!-- ========================================================= -->
 <div id="trend" class="section">
-    <h1>Trends of Major Religions (1980 → 2020)</h1>
+    <h1>Long-term Trend of Major Religions (1980 → 2020)</h1>
 
-    <div class="panel">
-        <div style="text-align:center; margin-bottom:15px;">
-            <label><input type="checkbox" checked onclick="toggleTrend('Buddhism')"> Buddhism</label>
-            <label><input type="checkbox" checked onclick="toggleTrend('Christianity')"> Christianity</label>
-            <label><input type="checkbox" checked onclick="toggleTrend('Islam')"> Islam</label>
-            <label><input type="checkbox" checked onclick="toggleTrend('Hinduism')"> Hinduism</label>
-            <label><input type="checkbox" checked onclick="toggleTrend('NoReligion')"> No Religion</label>
-        </div>
-        <svg id="trendSVG" width="760" height="450"></svg>
+    <div class="panel" style="text-align:center;">
+        <p>Click legend below to show/hide a religion.</p>
+        <button onclick="toggleTrend('Buddhism')">Buddhism</button>
+        <button onclick="toggleTrend('Christianity')">Christianity</button>
+        <button onclick="toggleTrend('Islam')">Islam</button>
+        <button onclick="toggleTrend('Hinduism')">Hinduism</button>
+        <button onclick="toggleTrend('NoReligion')">No Religion</button>
     </div>
 
+    <div class="panel">
+        <svg id="trendSVG" width="760" height="450"></svg>
+    </div>
 </div>
+
+
+
 <!-- ========================================================= -->
-<!-- =================== SECTION 5: ETHNICITY ================= -->
+<!-- =================== JAVASCRIPT DATA ====================== -->
+<!-- ========================================================= -->
+<script>
+// --------------------------- PIE DATA ---------------------------
+const religionData = [
+  { religion:"Buddhism", val:31.1 },
+  { religion:"Taoism", val:8.8 },
+  { religion:"Christianity", val:18.9 },
+  { religion:"Islam", val:15.6 },
+  { religion:"Hinduism", val:5.0 },
+  { religion:"Other", val:0.6 },
+  { religion:"No Religion", val:20.0 }
+];
+
+// --------------------------- AGE DATA ---------------------------
+const ageData = [
+  { age:"15-24", y2010:21.0, y2020:24.2 },
+  { age:"25-34", y2010:19.9, y2020:26.2 },
+  { age:"35-44", y2010:18.0, y2020:22.3 },
+  { age:"45-54", y2010:14.6, y2020:18.3 },
+  { age:"55+",   y2010:13.4, y2020:15.2 }
+];
+
+// --------------------------- TREND DATA ---------------------------
+const trendData = [
+    { year:1980, Buddhism:27, Christianity:10.3, Islam:14.9, Hinduism:3.3, NoReligion:13 },
+    { year:1990, Buddhism:31.2, Christianity:12.7, Islam:14.3, Hinduism:3.7, NoReligion:13.2 },
+    { year:2000, Buddhism:42.5, Christianity:14.6, Islam:14.9, Hinduism:4.0, NoReligion:14.8 },
+    { year:2010, Buddhism:33.3, Christianity:18.3, Islam:14.7, Hinduism:5.1, NoReligion:17.0 },
+    { year:2020, Buddhism:31.1, Christianity:18.9, Islam:15.6, Hinduism:5.0, NoReligion:20.0 }
+];
+</script>
+
+
+
+
+<!-- ========================================================= -->
+<!-- ============== JAVASCRIPT: AGE BAR CHART ================= -->
+<!-- ========================================================= -->
+<script>
+const ageSVG = d3.select("#ageBar");
+const AW=600, AH=400;
+
+// Axes
+const ax = d3.scaleBand().domain(ageData.map(d=>d.age))
+    .range([60, AW-40]).padding(0.3);
+const ay = d3.scaleLinear().domain([0,30]).range([AH-40,40]);
+
+ageSVG.append("g")
+    .attr("transform",`translate(0,${AH-40})`)
+    .call(d3.axisBottom(ax));
+ageSVG.append("g")
+    .attr("transform","translate(60,0)")
+    .call(d3.axisLeft(ay));
+
+// Bars
+const bars = ageSVG.selectAll("rect")
+  .data(ageData)
+  .enter()
+  .append("rect")
+  .attr("x", d=>ax(d.age))
+  .attr("width", ax.bandwidth())
+  .attr("fill","#f1d08f")
+  .attr("y", AH-40)
+  .attr("height", 0);
+
+// Update + Animation
+function updateAgeBars(year){
+  bars
+    .transition()
+    .duration(900)
+    .attr("y", d=>ay(d["y"+year]))
+    .attr("height", d=> (AH-40) - ay(d["y"+year]));
+}
+
+// Default state (2020)
+updateAgeBars("2020");
+</script>
+
+
+
+
+<!-- ========================================================= -->
+<!-- ============== JAVASCRIPT: AGE HEATMAP =================== -->
+<!-- ========================================================= -->
+<script>
+const heatSVG = d3.select("#ageHeatmap");
+
+const Hx = d3.scaleBand().domain(["2010","2020"]).range([100,500]).padding(0.2);
+const Hy = d3.scaleBand().domain(ageData.map(d=>d.age)).range([40,300]).padding(0.2);
+
+const Hcolor = d3.scaleLinear().domain([10,30]).range(["#8b6e3a","#f6d98a"]);
+
+// Tooltip
+const heatTip = d3.select("body").append("div")
+  .attr("class","tooltip");
+
+// Heatmap Cells
+ageData.forEach(row=>{
+  ["2010","2020"].forEach(year=>{
+    const value = row["y"+year];
+
+    let cell = heatSVG.append("rect")
+      .attr("x", Hx(year))
+      .attr("y", Hy(row.age))
+      .attr("width", Hx.bandwidth())
+      .attr("height", Hy.bandwidth())
+      .attr("fill", Hcolor(value))
+      .attr("opacity", 0)
+      .style("cursor","pointer");
+
+    // Entry fade-in
+    cell.transition()
+      .delay(200)
+      .duration(800)
+      .attr("opacity",1);
+
+    // Hover interaction
+    cell.on("mousemove", function(e){
+      d3.select(this)
+        .transition().duration(150)
+        .attr("transform","scale(1.05)")
+        .attr("stroke","#f6d98a")
+        .attr("stroke-width",2);
+
+      heatTip.style("opacity",1)
+        .style("left",e.clientX+20+"px")
+        .style("top",e.clientY+"px")
+        .html(`<b>${row.age}</b><br>${year}: ${value}%`);
+    })
+    .on("mouseleave", function(){
+      d3.select(this)
+        .transition().duration(150)
+        .attr("transform","scale(1)")
+        .attr("stroke","none");
+
+      heatTip.style("opacity",0);
+    });
+  });
+});
+</script>
+
+
+
+
+<!-- ========================================================= -->
+<!-- ============== JAVASCRIPT: TREND LINES =================== -->
+<!-- ========================================================= -->
+<script>
+const tSVG = d3.select("#trendSVG");
+const TW=760, TH=450;
+
+const tx = d3.scaleLinear().domain([1980,2020]).range([60,TW-40]);
+const ty = d3.scaleLinear().domain([0,50]).range([TH-40,40]);
+
+// Axes
+tSVG.append("g")
+  .attr("transform",`translate(0,${TH-40})`)
+  .call(d3.axisBottom(tx).tickFormat(d3.format("d")));
+tSVG.append("g")
+  .attr("transform","translate(60,0)")
+  .call(d3.axisLeft(ty));
+
+const trendColors = {
+  Buddhism:"#f6d98a",
+  Christianity:"#d8b46a",
+  Islam:"#b08745",
+  Hinduism:"#9c7834",
+  NoReligion:"#fce7b2"
+};
+
+const keys = Object.keys(trendColors);
+
+// Tooltip
+const trendTip = d3.select("body").append("div")
+  .attr("class","tooltip");
+
+const lineGen = d3.line()
+  .x(d=>tx(d.year))
+  .y(d=>ty(d.value));
+
+let trendSeries = keys.map(key=>{
+  const vals = trendData.map(d=>({year:d.year,value:d[key]}));
+
+  // Draw line with animation
+  const path = tSVG.append("path")
+    .datum(vals)
+    .attr("fill","none")
+    .attr("stroke",trendColors[key])
+    .attr("stroke-width",3)
+    .attr("d", lineGen)
+    .attr("stroke-dasharray", function(){return this.getTotalLength();})
+    .attr("stroke-dashoffset", function(){return this.getTotalLength();})
+    .transition()
+    .duration(1400)
+    .attr("stroke-dashoffset",0);
+
+  // Points
+  vals.forEach(v=>{
+    let circle = tSVG.append("circle")
+      .attr("cx", tx(v.year))
+      .attr("cy", ty(v.value))
+      .attr("r", 0)
+      .attr("fill", trendColors[key])
+      .style("cursor","pointer");
+
+    // Entry animation
+    circle.transition().delay(900).duration(600).attr("r",5);
+
+    // Hover
+    circle.on("mousemove", function(e){
+      d3.select(this).transition().duration(120).attr("r",9);
+
+      trendTip.style("opacity",1)
+        .style("left",e.clientX+20+"px")
+        .style("top",e.clientY+"px")
+        .html(`
+          <b>${key}</b><br>
+          Year: ${v.year}<br>
+          Value: ${v.value}%
+        `);
+    })
+    .on("mouseleave", function(){
+      d3.select(this).transition().duration(120).attr("r",5);
+      trendTip.style("opacity",0);
+    });
+  });
+
+  return { key, path };
+});
+
+// Show/hide series
+function toggleTrend(key){
+  let s = trendSeries.find(d=>d.key===key);
+  let hidden = s.path.attr("opacity")==1;
+  s.path.transition().duration(400).attr("opacity", hidden?0:1);
+}
+</script>
+<!-- ========================================================= -->
+<!-- ================= SECTION 5: ETHNICITY =================== -->
 <!-- ========================================================= -->
 <div id="ethnicity" class="section">
     <h1>Ethnicity × Religion (Census 2020)</h1>
@@ -210,16 +452,26 @@ button:hover { background: rgba(255,215,130,0.25); }
 
 
 
+
 <!-- ========================================================= -->
-<!-- =================== SECTION 6: MAP ======================= -->
+<!-- ====================== SECTION 6: MAP ==================== -->
 <!-- ========================================================= -->
 <div id="mapSection" class="section">
-    <h1>Map of Religious Sites in Singapore</h1>
+    <h1>Map of Major Religious Sites</h1>
+
+    <div class="panel" style="text-align:center; margin-bottom:25px;">
+        <button onclick="loadMarkers(null)">All</button>
+        <button onclick="loadMarkers('temple')">Temples</button>
+        <button onclick="loadMarkers('mosque')">Mosques</button>
+        <button onclick="loadMarkers('church')">Churches</button>
+        <button onclick="loadMarkers('hindu')">Hindu Temples</button>
+    </div>
 
     <div class="panel">
         <div id="map"></div>
     </div>
 </div>
+
 
 
 
@@ -243,193 +495,18 @@ button:hover { background: rgba(255,215,130,0.25); }
 
 
 
+
 <!-- ========================================================= -->
-<!-- ======================== SCRIPTS ========================= -->
+<!-- ====================== JS: STACKED BAR =================== -->
 <!-- ========================================================= -->
 <script>
-/* =========================================================
-   PIE CHART (Religious Composition)
-   ========================================================= */
-const religionData = [
-  { religion:"Buddhism", val:31.1 },
-  { religion:"Taoism", val:8.8 },
-  { religion:"Christianity", val:18.9 },
-  { religion:"Islam", val:15.6 },
-  { religion:"Hinduism", val:5.0 },
-  { religion:"Other", val:0.6 },
-  { religion:"No Religion", val:20.0 }
-];
-
-const pieSVG = d3.select("#pieChart")
-    .append("g")
-    .attr("transform","translate(240,240)");
-
-const pie = d3.pie().value(d=>d.val);
-const arc = d3.arc().innerRadius(70).outerRadius(200);
-
-const pieColor = d3.scaleOrdinal([
-  "#f6d98a","#d8b46a","#c49b5a","#b08745",
-  "#9c7834","#fce7b2","#f1d08f"
-]);
-
-pieSVG.selectAll("path")
-    .data(pie(religionData))
-    .enter().append("path")
-    .attr("fill",d=>pieColor(d.data.religion))
-    .transition().duration(1000)
-    .attrTween("d", function(d){
-        let i = d3.interpolate({startAngle:0,endAngle:0}, d);
-        return t => arc(i(t));
-    });
-
-pieSVG.selectAll("text")
-    .data(pie(religionData))
-    .enter()
-    .append("text")
-    .text(d=>`${d.data.religion}: ${d.data.val}%`)
-    .attr("transform",d=>`translate(${arc.centroid(d)})`)
-    .attr("fill","#fbe7b0")
-    .attr("font-size","12px");
-
-
-
-/* =========================================================
-   AGE BAR CHART
-   ========================================================= */
-const ageData = [
-  { age:"15-24", y2010:21.0, y2020:24.2 },
-  { age:"25-34", y2010:19.9, y2020:26.2 },
-  { age:"35-44", y2010:18.0, y2020:22.3 },
-  { age:"45-54", y2010:14.6, y2020:18.3 },
-  { age:"55+",   y2010:13.4, y2020:15.2 }
-];
-
-const ageSVG = d3.select("#ageBar");
-const AW=600, AH=400;
-const ax = d3.scaleBand().domain(ageData.map(d=>d.age))
-    .range([60, AW-40]).padding(0.3);
-const ay = d3.scaleLinear().domain([0,30]).range([AH-40,40]);
-
-ageSVG.append("g").attr("transform",`translate(0,${AH-40})`)
-    .call(d3.axisBottom(ax));
-ageSVG.append("g").attr("transform","translate(60,0)")
-    .call(d3.axisLeft(ay));
-
-const bars = ageSVG.selectAll("rect")
-    .data(ageData).enter()
-    .append("rect")
-    .attr("x", d=>ax(d.age))
-    .attr("width", ax.bandwidth())
-    .attr("fill","#f1d08f");
-
-function updateAgeBars(year){
-    bars.transition().duration(800)
-        .attr("y", d=>ay(d["y"+year]))
-        .attr("height", d=> (AH-40) - ay(d["y"+year]));
-}
-updateAgeBars("2020");
-
-
-
-/* =========================================================
-   AGE HEATMAP
-   ========================================================= */
-const heatSVG = d3.select("#ageHeatmap");
-const Hx = d3.scaleBand().domain(["2010","2020"]).range([100,500]);
-const Hy = d3.scaleBand().domain(ageData.map(d=>d.age)).range([40,300]);
-const Hcolor = d3.scaleLinear().domain([10,30]).range(["#8b6e3a","#f6d98a"]);
-
-ageData.forEach(row=>{
-    ["y2010","y2020"].forEach((yr,i)=>{
-        heatSVG.append("rect")
-            .attr("x", Hx(i===0?"2010":"2020"))
-            .attr("y", Hy(row.age))
-            .attr("width", Hx.bandwidth())
-            .attr("height", Hy.bandwidth())
-            .attr("fill", Hcolor(row[yr]));
-        heatSVG.append("text")
-            .attr("x", Hx(i===0?"2010":"2020")+Hx.bandwidth()/2)
-            .attr("y", Hy(row.age)+Hy.bandwidth()/2+5)
-            .attr("fill","#fff")
-            .attr("text-anchor","middle")
-            .text(row[yr]+"%");
-    });
-});
-
-
-
-/* =========================================================
-   TREND LINE CHART
-   ========================================================= */
-const trendData = [
-    { year:1980, Buddhism:27, Christianity:10.3, Islam:14.9, Hinduism:3.3, NoReligion:13 },
-    { year:1990, Buddhism:31.2, Christianity:12.7, Islam:14.3, Hinduism:3.7, NoReligion:13.2 },
-    { year:2000, Buddhism:42.5, Christianity:14.6, Islam:14.9, Hinduism:4.0, NoReligion:14.8 },
-    { year:2010, Buddhism:33.3, Christianity:18.3, Islam:14.7, Hinduism:5.1, NoReligion:17.0 },
-    { year:2020, Buddhism:31.1, Christianity:18.9, Islam:15.6, Hinduism:5.0, NoReligion:20.0 }
-];
-
-const tSVG = d3.select("#trendSVG");
-const TW=760, TH=450;
-
-const tx = d3.scaleLinear().domain([1980,2020]).range([60,TW-40]);
-const ty = d3.scaleLinear().domain([0,50]).range([TH-40,40]);
-
-tSVG.append("g").attr("transform",`translate(0,${TH-40})`).call(d3.axisBottom(tx).tickFormat(d3.format("d")));
-tSVG.append("g").attr("transform","translate(60,0)").call(d3.axisLeft(ty));
-
-const trendColors = {
-    Buddhism:"#f6d98a",
-    Christianity:"#d8b46a",
-    Islam:"#b08745",
-    Hinduism:"#9c7834",
-    NoReligion:"#fce7b2"
-};
-
-const trendKeys = Object.keys(trendColors);
-
-const trendLine = d3.line().x(d=>tx(d.year)).y(d=>ty(d.value));
-
-let trendSeries = trendKeys.map(key=>{
-    const vals = trendData.map(d=>({year:d.year, value:d[key]}));
-    return {
-        key,
-        path: tSVG.append("path")
-            .datum(vals)
-            .attr("fill","none")
-            .attr("stroke",trendColors[key])
-            .attr("stroke-width",3)
-            .attr("d",trendLine)
-    };
-});
-
-function toggleTrend(key){
-    let series = trendSeries.find(s=>s.key===key);
-    let now = series.path.attr("opacity")==1 ? 0 : 1;
-    series.path.transition().duration(400).attr("opacity",now);
-}
-
-
-
-/* =========================================================
-   ETHNICITY STACKED BAR
-   ========================================================= */
+// ----------- Ethnicity Data -----------
 const ethData = [
     { ethnicity:"Chinese", Buddhism:33.2, Taoism:9.9, Christianity:20.4, Islam:0.4,  Hinduism:0.2, NoReligion:26.0, Other:0.6 },
     { ethnicity:"Malay",   Buddhism:0.3,  Taoism:0.1, Christianity:10.0,Islam:84.0, Hinduism:0.1, NoReligion:3.5,  Other:0.2 },
     { ethnicity:"Indian",  Buddhism:0.4,  Taoism:0.1, Christianity:12.6,Islam:24.0, Hinduism:57.3,NoReligion:4.0, Other:1.6 },
     { ethnicity:"Others",  Buddhism:2.0,  Taoism:1.0, Christianity:28.0,Islam:10.0, Hinduism:2.5, NoReligion:52.0,Other:4.5 }
 ];
-
-const ethSVG = d3.select("#ethnicityStack");
-const EW=760, EH=450;
-
-const ex = d3.scaleBand().domain(ethData.map(d=>d.ethnicity))
-    .range([60, EW-40]).padding(0.3);
-const ey = d3.scaleLinear().domain([0,100]).range([EH-40,40]);
-
-ethSVG.append("g").attr("transform",`translate(0,${EH-40})`).call(d3.axisBottom(ex));
-ethSVG.append("g").attr("transform","translate(60,0)").call(d3.axisLeft(ey));
 
 const eKeys = ["Buddhism","Taoism","Christianity","Islam","Hinduism","NoReligion","Other"];
 const eColors = {
@@ -442,88 +519,147 @@ const eColors = {
   Other:"#7a5c32"
 };
 
+const ethSVG = d3.select("#ethnicityStack");
+const EW=760, EH=450;
+
+const ex = d3.scaleBand().domain(ethData.map(d=>d.ethnicity))
+    .range([60, EW-40]).padding(0.3);
+const ey = d3.scaleLinear().domain([0,100]).range([EH-40,40]);
+
+ethSVG.append("g").attr("transform",`translate(0,${EH-40})`).call(d3.axisBottom(ex));
+ethSVG.append("g").attr("transform","translate(60,0)").call(d3.axisLeft(ey));
+
 const stack = d3.stack().keys(eKeys);
-stack(ethData).forEach(series=>{
-    ethSVG.append("g").attr("fill",eColors[series.key])
-        .selectAll("rect")
-        .data(series).enter()
-        .append("rect")
-        .attr("x",d=>ex(d.data.ethnicity))
-        .attr("y",d=>ey(d[1]))
-        .attr("height",d=>ey(d[0]) - ey(d[1]))
-        .attr("width",ex.bandwidth());
+let stackedSeries = stack(ethData);
+
+// Tooltip
+const ethTip = d3.select("body").append("div")
+  .attr("class","tooltip");
+
+// Draw animated bars
+stackedSeries.forEach((series, idx)=>{
+  ethSVG.append("g")
+    .attr("fill", eColors[series.key])
+    .selectAll("rect")
+    .data(series)
+    .enter()
+    .append("rect")
+    .attr("x", d=>ex(d.data.ethnicity))
+    .attr("y", EH-40)
+    .attr("height", 0)
+    .attr("width", ex.bandwidth())
+    .transition()
+    .delay(idx*100)
+    .duration(700)
+    .attr("y", d=>ey(d[1]))
+    .attr("height", d=>ey(d[0]) - ey(d[1]));
 });
 
+// Hover interactions
+ethSVG.selectAll("rect")
+  .on("mousemove", function(e, d){
+    let religion = this.parentNode.__data__.key;
 
+    d3.select(this)
+      .transition().duration(120)
+      .attr("stroke","#f6d98a")
+      .attr("stroke-width",2);
 
-/* =========================================================
-   ETHNICITY PIE
-   ========================================================= */
-const ethPieSVG = d3.select("#ethnicityPie").append("g")
-    .attr("transform","translate(190,190)");
-
-const ethPieData = [
-    { group:"Chinese", value:74.3 },
-    { group:"Malay", value:13.5 },
-    { group:"Indian", value:9.0 },
-    { group:"Others", value:3.2 }
-];
-
-const ethPie = d3.pie().value(d=>d.value);
-const ethArc = d3.arc().innerRadius(60).outerRadius(140);
-
-ethPieSVG.selectAll("path")
-    .data(ethPie(ethPieData))
-    .enter().append("path")
-    .attr("fill", (d,i)=>["#f6d98a","#d8b46a","#b69a6a","#7a5c32"][i])
-    .attr("d",ethArc);
-
-ethPieSVG.selectAll("text")
-    .data(ethPie(ethPieData))
-    .enter().append("text")
-    .attr("transform", d=>`translate(${ethArc.centroid(d)})`)
-    .attr("text-anchor","middle")
-    .attr("fill","#fff")
-    .text(d=>`${d.data.group} (${d.data.value}%)`);
+    ethTip.style("opacity",1)
+      .style("left",e.clientX+20+"px")
+      .style("top",e.clientY+"px")
+      .html(`
+        <b>${d.data.ethnicity}</b><br>
+        ${religion}: ${(d.data[religion]).toFixed(1)}%
+      `);
+  })
+  .on("mouseleave", function(){
+    d3.select(this)
+      .transition().duration(120)
+      .attr("stroke","none");
+    ethTip.style("opacity",0);
+  });
+</script>
 
 
 
 
-/* =========================================================
-   RELIGIOUS MAP (Leaflet)
-   ========================================================= */
+<!-- ========================================================= -->
+<!-- ========================== MAP =========================== -->
+<!-- ========================================================= -->
+<script>
 const map = L.map("map", {scrollWheelZoom:true}).setView([1.3521,103.8198],12);
 
-L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=6AvT-Rp7tuT1A5uYWm4y7e8tnHQgDZ1ssqrGh89q7KQfuvZmuJMpqJj0YZqdw2Kc',{
-}).addTo(map);
+L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=6AvT-Rp7tuT1A5uYWm4y7e8tnHQgDZ1ssqrGh89q7KQfuvZmuJMpqJj0YZqdw2Kc',{})
+  .addTo(map);
 
-const mapIcons = {
-    temple: L.divIcon({className:"", html:"🔱", iconSize:[26,26]}),
-    mosque: L.divIcon({className:"", html:"🕌", iconSize:[26,26]}),
-    church: L.divIcon({className:"", html:"⛪", iconSize:[26,26]}),
-    hindu:  L.divIcon({className:"", html:"🕉️", iconSize:[26,26]})
+const iconHTML = {
+  temple:"🔱",
+  mosque:"🕌",
+  church:"⛪",
+  hindu:"🕉️"
 };
 
+function createIcon(type){
+  return L.divIcon({
+    className:"",
+    html:`<div style="
+      transform: scale(0);
+      animation: popIn 0.4s forwards;
+      font-size: 30px;">${iconHTML[type]}</div>`
+  });
+}
+
+// Keyframes
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes popIn {
+  0% { transform: scale(0); opacity:0; }
+  60% { transform: scale(1.5); opacity:1; }
+  100% { transform: scale(1); }
+}`;
+document.head.appendChild(style);
+
+// Example sites
 const sites = [
     {name:"Buddha Tooth Relic Temple", type:"temple", lat:1.2814, lng:103.8443},
-    {name:"Thian Hock Keng Temple", type:"temple", lat:1.2804, lng:103.8480},
+    {name:"Thian Hock Keng", type:"temple", lat:1.2804, lng:103.8480},
     {name:"Sultan Mosque", type:"mosque", lat:1.3028, lng:103.8591},
     {name:"St Andrew’s Cathedral", type:"church", lat:1.2924, lng:103.8525},
     {name:"Sri Mariamman Temple", type:"hindu", lat:1.2831, lng:103.8447},
     {name:"Sri Veeramakaliamman Temple", type:"hindu", lat:1.3066, lng:103.8497},
 ];
 
-sites.forEach(s=>{
-    L.marker([s.lat,s.lng], {icon: mapIcons[s.type]})
-        .addTo(map)
-        .bindPopup(`<b>${s.name}</b><br>${s.type}`);
-});
+let markers = [];
+
+function loadMarkers(filter=null){
+  markers.forEach(m=>map.removeLayer(m));
+  markers = [];
+
+  sites.forEach(s=>{
+    if(filter && s.type!==filter) return;
+
+    let marker = L.marker([s.lat,s.lng], {icon:createIcon(s.type)})
+      .addTo(map)
+      .bindPopup(`<b>${s.name}</b><br>${s.type}`);
+
+    marker.on("mouseover", ()=>marker.openPopup());
+    marker.on("mouseout", ()=>marker.closePopup());
+
+    markers.push(marker);
+  });
+}
+
+loadMarkers();
+</script>
 
 
 
-/* =========================================================
-   TIMELINE
-   ========================================================= */
+
+<!-- ========================================================= -->
+<!-- ======================== TIMELINE ======================== -->
+<!-- ========================================================= -->
+<script>
 const festivals = [
   {name:"Chinese New Year", date:"Jan", emoji:"🧧", x:100},
   {name:"Hari Raya", date:"Apr", emoji:"🕌", x:300},
@@ -533,30 +669,73 @@ const festivals = [
 
 const tlSVG = d3.select("#timelineSVG");
 
+// Draw baseline with animation
 tlSVG.append("line")
-    .attr("x1",80).attr("x2",820)
+    .attr("x1",80).attr("x2",80)
     .attr("y1",130).attr("y2",130)
-    .attr("stroke","#f6d98a").attr("stroke-width",3);
+    .attr("stroke","#f6d98a").attr("stroke-width",3)
+    .transition().duration(1000).attr("x2",820);
 
-festivals.forEach(f=>{
-    tlSVG.append("circle")
-        .attr("cx",f.x).attr("cy",130).attr("r",12)
-        .attr("fill","#f6d98a")
-        .style("filter","drop-shadow(0 0 6px rgba(255,215,130,1))");
+// Tooltip
+const tlTip = d3.select("body").append("div").attr("class","tooltip");
 
-    tlSVG.append("text")
-        .attr("x",f.x).attr("y",110)
-        .attr("text-anchor","middle")
-        .attr("fill","#fbe7b0")
-        .text(`${f.emoji} ${f.name}`);
+festivals.forEach((f,i)=>{
+  let animCircle = tlSVG.append("circle")
+    .attr("cx",f.x).attr("cy",130).attr("r",0)
+    .attr("fill","#f6d98a")
+    .style("filter","drop-shadow(0 0 6px rgba(255,215,130,1))")
+    .transition().delay(400+i*200)
+    .duration(800).attr("r",12);
 
-    tlSVG.append("text")
-        .attr("x",f.x).attr("y",160)
-        .attr("text-anchor","middle")
-        .attr("fill","#c8a66a")
-        .text(f.date);
+  let circle = tlSVG.append("circle")
+    .attr("cx",f.x).attr("cy",130).attr("r",12)
+    .attr("fill","transparent");
+
+  circle.on("mousemove", function(e){
+    d3.select(this)
+      .transition().duration(120)
+      .attr("r",18);
+
+    tlTip.style("opacity",1)
+      .style("left",e.clientX+20+"px")
+      .style("top",e.clientY+"px")
+      .html(`<b>${f.name}</b><br>${f.date}`);
+  })
+  .on("mouseleave", function(){
+    d3.select(this)
+      .transition().duration(120)
+      .attr("r",12);
+    tlTip.style("opacity",0);
+  })
+  .on("click", function(){
+    let big = d3.select(this).attr("r")==12 ? 26 : 12;
+    d3.select(this).transition().duration(200).attr("r",big);
+  });
+
+  tlSVG.append("text")
+    .attr("x",f.x)
+    .attr("y",110)
+    .attr("opacity",0)
+    .attr("fill","#fbe7b0")
+    .attr("text-anchor","middle")
+    .text(`${f.emoji} ${f.name}`)
+    .transition().delay(900+i*200)
+    .duration(800).attr("opacity",1);
+
+  tlSVG.append("text")
+    .attr("x",f.x).attr("y",160)
+    .attr("opacity",0)
+    .attr("fill","#c8a66a")
+    .attr("text-anchor","middle")
+    .text(f.date)
+    .transition().delay(1000+i*200)
+    .duration(800).attr("opacity",1);
 });
 </script>
 
+
+
+
 </body>
 </html>
+
