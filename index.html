@@ -344,96 +344,156 @@ ageData.forEach(row=>{
 <!-- ========================================================= -->
 <!-- ============== JAVASCRIPT: TREND LINES =================== -->
 <!-- ========================================================= -->
+<div class="chartBox">
+    <h2>Religious Trend (1965–2020)</h2>
+    <svg id="trendSVG" width="600" height="380"></svg>
+</div>
+
 <script>
-const tSVG = d3.select("#trendSVG");
-const TW=760, TH=450;
+/* ------- Demo Data (可替换真实数据) ------- */
+const trendData = [
+  {year:1965, buddhist:10, christian:5, islam:12},
+  {year:1980, buddhist:18, christian:8, islam:14},
+  {year:1990, buddhist:24, christian:12, islam:15},
+  {year:2000, buddhist:30, christian:17, islam:14},
+  {year:2010, buddhist:33, christian:19, islam:15},
+  {year:2020, buddhist:31, christian:18.9, islam:15.6}
+];
 
-const tx = d3.scaleLinear().domain([1980,2020]).range([60,TW-40]);
-const ty = d3.scaleLinear().domain([0,50]).range([TH-40,40]);
-
-// Axes
-tSVG.append("g")
-  .attr("transform",`translate(0,${TH-40})`)
-  .call(d3.axisBottom(tx).tickFormat(d3.format("d")));
-tSVG.append("g")
-  .attr("transform","translate(60,0)")
-  .call(d3.axisLeft(ty));
-
-const trendColors = {
-  Buddhism:"#f6d98a",
-  Christianity:"#d8b46a",
-  Islam:"#b08745",
-  Hinduism:"#9c7834",
-  NoReligion:"#fce7b2"
+const colors = {
+  buddhist:"#f6d98a",
+  christian:"#d8b46a",
+  islam:"#ffdf9e"
 };
 
-const keys = Object.keys(trendColors);
+const svg = d3.select("#trendSVG");
+const w = 600, h = 380;
+const margin = {top:40,right:80,bottom:40,left:50};
 
-// Tooltip
-const trendTip = d3.select("body").append("div")
-  .attr("class","tooltip");
+const x = d3.scaleLinear()
+  .domain(d3.extent(trendData, d=>d.year))
+  .range([margin.left, w-margin.right]);
 
-const lineGen = d3.line()
-  .x(d=>tx(d.year))
-  .y(d=>ty(d.value));
+const y = d3.scaleLinear()
+  .domain([0,40])
+  .range([h-margin.bottom, margin.top]);
 
-let trendSeries = keys.map(key=>{
-  const vals = trendData.map(d=>({year:d.year,value:d[key]}));
+svg.append("g")
+  .attr("transform",`translate(0,${h-margin.bottom})`)
+  .call(d3.axisBottom(x).tickFormat(d3.format("d")))
+  .selectAll("text").attr("fill","#f8d998");
 
-  // Draw line with animation
-  const path = tSVG.append("path")
-    .datum(vals)
-    .attr("fill","none")
-    .attr("stroke",trendColors[key])
-    .attr("stroke-width",3)
-    .attr("d", lineGen)
-    .attr("stroke-dasharray", function(){return this.getTotalLength();})
-    .attr("stroke-dashoffset", function(){return this.getTotalLength();})
+svg.append("g")
+  .attr("transform",`translate(${margin.left},0)`)
+  .call(d3.axisLeft(y))
+  .selectAll("text").attr("fill","#f8d998");
+
+const religions = ["buddhist","christian","islam"];
+
+religions.forEach(key=>{
+  
+  const line = d3.line()
+      .x(d=>x(d.year))
+      .y(d=>y(d[key]));
+
+  const path = svg.append("path")
+      .datum(trendData)
+      .attr("fill","none")
+      .attr("stroke",colors[key])
+      .attr("stroke-width",2)
+      .attr("d",line);
+
+  const length = path.node().getTotalLength();
+
+  /* 进入动画 */
+  path
+    .attr("stroke-dasharray",length)
+    .attr("stroke-dashoffset",length)
     .transition()
-    .duration(1400)
+    .duration(1500)
+    .ease(d3.easeCubic)
     .attr("stroke-dashoffset",0);
 
-  // Points
-  vals.forEach(v=>{
-    let circle = tSVG.append("circle")
-      .attr("cx", tx(v.year))
-      .attr("cy", ty(v.value))
-      .attr("r", 0)
-      .attr("fill", trendColors[key])
-      .style("cursor","pointer");
+  /* 圆点 */
+  const dots = svg.selectAll(`.dot-${key}`)
+      .data(trendData)
+      .enter()
+      .append("circle")
+      .attr("class",`dot-${key}`)
+      .attr("cx",d=>x(d.year))
+      .attr("cy",d=>y(d[key]))
+      .attr("r",4)
+      .attr("fill",colors[key])
+      .style("transition","0.25s");
 
-    // Entry animation
-    circle.transition().delay(900).duration(600).attr("r",5);
+  /* Hover — 点发光 */
+  dots.on("mouseenter", function(e,d){
+      d3.select(this)
+        .transition().duration(150)
+        .attr("r",7)
+        .attr("fill","#fff6dc");
 
-    // Hover
-    circle.on("mousemove", function(e){
-      d3.select(this).transition().duration(120).attr("r",9);
-
-      trendTip.style("opacity",1)
-        .style("left",e.clientX+20+"px")
-        .style("top",e.clientY+"px")
-        .html(`
-          <b>${key}</b><br>
-          Year: ${v.year}<br>
-          Value: ${v.value}%
-        `);
-    })
-    .on("mouseleave", function(){
-      d3.select(this).transition().duration(120).attr("r",5);
-      trendTip.style("opacity",0);
-    });
+      showTip(e, `${key}: ${d[key]}%`);
   });
 
-  return { key, path };
+  dots.on("mouseleave", function(e,d){
+      d3.select(this)
+        .transition().duration(150)
+        .attr("r",4)
+        .attr("fill",colors[key]);
+
+      hideTip();
+  });
+
+  /* Legend 交互 */
+  const legend = svg.append("text")
+      .attr("x", w-margin.right+10)
+      .attr("y", margin.top + religions.indexOf(key)*30)
+      .text(key.charAt(0).toUpperCase()+key.slice(1))
+      .attr("fill", colors[key])
+      .style("cursor","pointer")
+      .on("click", ()=>{
+         const currentOpacity = path.style("opacity") == 1 ? 0 : 1;
+
+         path.transition().duration(600).style("opacity",currentOpacity);
+         dots.transition().duration(600).style("opacity",currentOpacity);
+
+         /* 如果重新显示 → 播放绘制动画 */
+         if(currentOpacity==1){
+           path
+           .attr("stroke-dashoffset",length)
+           .transition().duration(1500)
+           .attr("stroke-dashoffset",0);
+         }
+      });
 });
 
-// Show/hide series
-function toggleTrend(key){
-  let s = trendSeries.find(d=>d.key===key);
-  let hidden = s.path.attr("opacity")==1;
-  s.path.transition().duration(400).attr("opacity", hidden?0:1);
+/* Tooltip */
+const tooltip = d3.select("body")
+  .append("div")
+  .style("position","fixed")
+  .style("padding","8px 10px")
+  .style("background","#1a1a1d")
+  .style("color","#f6d98a")
+  .style("border","1px solid #f1d08f")
+  .style("border-radius","8px")
+  .style("pointer-events","none")
+  .style("opacity",0)
+  .style("font-size","13px");
+
+function showTip(event,text){
+  tooltip.html(text)
+    .style("left", (event.clientX+15)+"px")
+    .style("top", (event.clientY-10)+"px")
+    .transition().duration(100)
+    .style("opacity",1);
+}
+
+function hideTip(){
+  tooltip.transition().duration(150).style("opacity",0);
 }
 </script>
+
 <!-- ========================================================= -->
 <!-- ================= SECTION 5: ETHNICITY =================== -->
 <!-- ========================================================= -->
@@ -499,95 +559,135 @@ function toggleTrend(key){
 <!-- ========================================================= -->
 <!-- ====================== JS: STACKED BAR =================== -->
 <!-- ========================================================= -->
+<div class="chartBox">
+    <h2>Religion by Ethnicity (2020)</h2>
+    <svg id="stackedSVG" width="600" height="380"></svg>
+</div>
+
 <script>
-// ----------- Ethnicity Data -----------
-const ethData = [
-    { ethnicity:"Chinese", Buddhism:33.2, Taoism:9.9, Christianity:20.4, Islam:0.4,  Hinduism:0.2, NoReligion:26.0, Other:0.6 },
-    { ethnicity:"Malay",   Buddhism:0.3,  Taoism:0.1, Christianity:10.0,Islam:84.0, Hinduism:0.1, NoReligion:3.5,  Other:0.2 },
-    { ethnicity:"Indian",  Buddhism:0.4,  Taoism:0.1, Christianity:12.6,Islam:24.0, Hinduism:57.3,NoReligion:4.0, Other:1.6 },
-    { ethnicity:"Others",  Buddhism:2.0,  Taoism:1.0, Christianity:28.0,Islam:10.0, Hinduism:2.5, NoReligion:52.0,Other:4.5 }
+/* 数据示例，可改成真实数据 */
+const raceData = [
+  {race:"Chinese", Buddhist:33, Christian:20, Islam:1, Hindu:0.4, None:20},
+  {race:"Malay", Buddhist:1, Christian:10, Islam:84, Hindu:0.3, None:1},
+  {race:"Indian", Buddhist:5, Christian:19, Islam:24, Hindu:55, None:2},
 ];
 
-const eKeys = ["Buddhism","Taoism","Christianity","Islam","Hinduism","NoReligion","Other"];
-const eColors = {
-  Buddhism:"#f6d98a",
-  Taoism:"#d8b46a",
-  Christianity:"#c49b5a",
-  Islam:"#b08745",
-  Hinduism:"#9c7834",
-  NoReligion:"#fce7b2",
-  Other:"#7a5c32"
+const groups = ["Buddhist","Christian","Islam","Hindu","None"];
+
+const colorMap = {
+  Buddhist:"#f6d98a",
+  Christian:"#d8b46a",
+  Islam:"#ffdf9e",
+  Hindu:"#eac77c",
+  None:"#c9a35a"
 };
 
-const ethSVG = d3.select("#ethnicityStack");
-const EW=760, EH=450;
+const svgS = d3.select("#stackedSVG");
+const W = 600, H = 380;
+const M = {top:30,right:30,bottom:40,left:60};
 
-const ex = d3.scaleBand().domain(ethData.map(d=>d.ethnicity))
-    .range([60, EW-40]).padding(0.3);
-const ey = d3.scaleLinear().domain([0,100]).range([EH-40,40]);
+const xS = d3.scaleLinear()
+  .domain([0,100])
+  .range([M.left, W-M.right]);
 
-ethSVG.append("g").attr("transform",`translate(0,${EH-40})`).call(d3.axisBottom(ex));
-ethSVG.append("g").attr("transform","translate(60,0)").call(d3.axisLeft(ey));
+const yS = d3.scaleBand()
+  .domain(raceData.map(d=>d.race))
+  .range([M.top, H-M.bottom])
+  .padding(0.3);
 
-const stack = d3.stack().keys(eKeys);
-let stackedSeries = stack(ethData);
+svgS.append("g")
+  .attr("transform",`translate(0,${H-M.bottom})`)
+  .call(d3.axisBottom(xS).ticks(5))
+  .selectAll("text").attr("fill","#f8d998");
 
-// Tooltip
-const ethTip = d3.select("body").append("div")
-  .attr("class","tooltip");
+svgS.append("g")
+  .attr("transform",`translate(${M.left},0)`)
+  .call(d3.axisLeft(yS))
+  .selectAll("text").attr("fill","#f8d998");
 
-// Draw animated bars
-stackedSeries.forEach((series, idx)=>{
-  ethSVG.append("g")
-    .attr("fill", eColors[series.key])
-    .selectAll("rect")
-    .data(series)
+/* 堆叠数据 */
+const stack = d3.stack().keys(groups);
+const stackedSeries = stack(raceData);
+
+/* tooltip */
+const tipS = d3.select("body").append("div")
+  .style("position","fixed")
+  .style("padding","6px 9px")
+  .style("background","#1a1a1d")
+  .style("color","#f6d98a")
+  .style("border","1px solid #f1d08f")
+  .style("font-size","13px")
+  .style("pointer-events","none")
+  .style("opacity",0);
+
+/* 绘制堆叠柱 */
+stackedSeries.forEach(layer=>{
+  
+  svgS.selectAll(".layer-"+layer.key)
+    .data(layer)
     .enter()
     .append("rect")
-    .attr("x", d=>ex(d.data.ethnicity))
-    .attr("y", EH-40)
-    .attr("height", 0)
-    .attr("width", ex.bandwidth())
+    .attr("class","layer-"+layer.key)
+    .attr("x", d=>xS(d[0]))
+    .attr("y", d=>yS(d.data.race))
+    .attr("height", yS.bandwidth())
+    .attr("width", 0)   /* 进入动画从 0 长大 */
+    .attr("fill", colorMap[layer.key])
     .transition()
-    .delay(idx*100)
-    .duration(700)
-    .attr("y", d=>ey(d[1]))
-    .attr("height", d=>ey(d[0]) - ey(d[1]));
+    .duration(900)
+    .ease(d3.easeCubicOut)
+    .attr("width", d=>xS(d[1]) - xS(d[0]));
+
 });
 
-// Hover interactions
-ethSVG.selectAll("rect")
-  .on("mousemove", function(e, d){
-    let religion = this.parentNode.__data__.key;
+/* hover 整条条形图放大 */
+svgS.selectAll("rect")
+  .on("mouseenter", function(e,d){
+    const parentRace = d.data ? d.data.race : "";
 
-    d3.select(this)
-      .transition().duration(120)
-      .attr("stroke","#f6d98a")
-      .attr("stroke-width",2);
+    d3.selectAll(`rect`)
+      .filter(r=>r?.data?.race === parentRace)
+      .transition()
+      .duration(200)
+      .attr("transform","scale(1.05,1.07) translate(-10,-6)");
 
-    ethTip.style("opacity",1)
-      .style("left",e.clientX+20+"px")
+    tipS
+      .html(`${parentRace} — ${this.__data__.data ? "" : ""}`)
+      .style("left",e.clientX+15+"px")
       .style("top",e.clientY+"px")
-      .html(`
-        <b>${d.data.ethnicity}</b><br>
-        ${religion}: ${(d.data[religion]).toFixed(1)}%
-      `);
+      .transition().duration(100)
+      .style("opacity",1);
   })
   .on("mouseleave", function(){
-    d3.select(this)
-      .transition().duration(120)
-      .attr("stroke","none");
-    ethTip.style("opacity",0);
+      d3.selectAll("rect")
+        .transition().duration(200)
+        .attr("transform","scale(1) translate(0,0)");
+
+      tipS.transition().duration(150).style("opacity",0);
   });
+
+
+/* Legend 点击隐藏/显示某宗教层 */
+groups.forEach((gKey,i)=>{
+  svgS.append("text")
+    .attr("x", W-100)
+    .attr("y", M.top + i*25)
+    .text(gKey)
+    .attr("fill", colorMap[gKey])
+    .style("cursor","pointer")
+    .on("click", ()=>{
+       
+        const layerRects = svgS.selectAll(`.layer-${gKey}`);
+        const current = layerRects.style("opacity") == 1 ? 0 : 1;
+
+        layerRects
+          .transition()
+          .duration(400)
+          .style("opacity", current);
+    });
+});
 </script>
 
-
-
-
-<!-- ========================================================= -->
-<!-- ========================== MAP =========================== -->
-<!-- ========================================================= -->
-<script>
 const map = L.map("map", {scrollWheelZoom:true}).setView([1.3521,103.8198],12);
 
 L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}.png?access-token=6AvT-Rp7tuT1A5uYWm4y7e8tnHQgDZ1ssqrGh89q7KQfuvZmuJMpqJj0YZqdw2Kc',{})
