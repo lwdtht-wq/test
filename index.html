@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Singapore Religion Visualization · Black & Gold Magical Scroll Edition</title>
+<title>Singapore Religion data</title>
 
 <!-- D3.js -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -137,7 +137,7 @@ nav a:hover {
 <!-- ====================== HOME ============================= -->
 <!-- ========================================================= -->
 <div id="intro" class="section">
-    <h1>Singapore Religion Data Visualisation<br>Black & Gold Magical Scroll Edition</h1>
+    <h1>Singapore Religion Data</h1>
 
     <div class="panel">
         <p style="font-size:18px; line-height:1.8;">
@@ -178,7 +178,8 @@ const pieData = [
 
 // Layout
 const PW = 900, PH = 500;
-const cx = 350, cy = PH/2;
+const cx = PW / 2;   // 让饼图水平居中
+const cy = PH / 2;   // 垂直居中
 const radius = 150;
 
 const pieSvg = d3.select("#pieSVG");
