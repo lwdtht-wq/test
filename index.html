@@ -754,152 +754,77 @@ function loadMarkers(filter=null){
 }
 
 loadMarkers();
-</script>
-<!-- ========================================================= -->
-<!-- ====================== TIMELINE SECTION ================= -->
-<!-- ========================================================= -->
-<div id="timeline" class="section">
-    <h1 class="gold-glow-title">Religious Festivals Timeline</h1>
-
-    <div class="panel fade-panel">
-        <svg id="timelineSVG" width="900" height="260"></svg>
-    </div>
-
-    <div class="panel fade-panel">
-        <div class="timeline-box"><b>Chinese New Year</b>: Lunar new year celebrations</div>
-        <div class="timeline-box"><b>Hari Raya Aidilfitri</b>: End of Ramadan</div>
-        <div class="timeline-box"><b>Vesak Day</b>: Buddha’s birth & enlightenment</div>
-        <div class="timeline-box"><b>Deepavali</b>: Festival of Lights</div>
-    </div>
-</div>
-
 <script>
-const festivals = [
-  {name:"Chinese New Year", date:"Jan–Feb", emoji:"🧧", x:120},
-  {name:"Hari Raya", date:"Apr", emoji:"🕌", x:300},
-  {name:"Vesak Day", date:"May", emoji:"🪷", x:500},
-  {name:"Deepavali", date:"Nov", emoji:"🪔", x:720}
+// ---------- Init Map ----------
+const map = L.map("map", { scrollWheelZoom: true }).setView([1.3521, 103.8198], 12);
+
+// ---------- Tile Layer（永不失效） ----------
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+}).addTo(map);
+
+// ---------- Icons ----------
+const iconHTML = {
+  temple: "🔱",
+  mosque: "🕌",
+  church: "⛪",
+  hindu: "🕉️",
+};
+
+function createIcon(type) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      transform: scale(0);
+      animation: popIn 0.4s forwards;
+      font-size: 30px;
+    ">${iconHTML[type]}</div>`
+  });
+}
+
+// ---------- Icon Animation ----------
+const styleAnim = document.createElement("style");
+styleAnim.innerHTML = `
+@keyframes popIn {
+  0% { transform: scale(0); opacity:0; }
+  60% { transform: scale(1.5); opacity:1; }
+  100% { transform: scale(1); }
+}`;
+document.head.appendChild(styleAnim);
+
+// ---------- Religious Sites ----------
+const sites = [
+  {name:"Buddha Tooth Relic Temple", type:"temple", lat:1.2814, lng:103.8443},
+  {name:"Thian Hock Keng", type:"temple", lat:1.2804, lng:103.8480},
+  {name:"Sultan Mosque", type:"mosque", lat:1.3028, lng:103.8591},
+  {name:"St Andrew’s Cathedral", type:"church", lat:1.2924, lng:103.8525},
+  {name:"Sri Mariamman Temple", type:"hindu", lat:1.2831, lng:103.8447},
+  {name:"Sri Veeramakaliamman Temple", type:"hindu", lat:1.3066, lng:103.8497},
 ];
 
-const tlSVG = d3.select("#timelineSVG");
+let markers = [];
 
-// baseline animation
-tlSVG.append("line")
-    .attr("x1",80).attr("x2",80)
-    .attr("y1",130).attr("y2",130)
-    .attr("stroke","#f6d98a").attr("stroke-width",3)
-    .transition().duration(900)
-    .attr("x2",820);
+function loadMarkers(filter = null) {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
 
-// Tooltip
-const tlTip = d3.select("body").append("div").attr("class","tooltip");
+  sites.forEach(s => {
+    if (filter && s.type !== filter) return;
 
-festivals.forEach((f,i)=>{
+    let marker = L.marker([s.lat, s.lng], { icon: createIcon(s.type) })
+      .addTo(map)
+      .bindPopup(`<b>${s.name}</b><br>${s.type}`);
 
-  // circle pop
-  tlSVG.append("circle")
-    .attr("cx",f.x)
-    .attr("cy",130)
-    .attr("r",0)
-    .attr("fill","#f6d98a")
-    .style("filter","drop-shadow(0 0 6px rgba(255,215,130,1))")
-    .transition()
-    .delay(300 + i*250)
-    .duration(600)
-    .attr("r",12);
+    marker.on("mouseover", () => marker.openPopup());
+    marker.on("mouseout", () => marker.closePopup());
 
-  const circle = tlSVG.append("circle")
-    .attr("cx",f.x)
-    .attr("cy",130)
-    .attr("r",12)
-    .attr("fill","transparent")
-    .style("cursor","pointer");
-
-  circle.on("mousemove", function(e){
-    d3.select(this)
-      .transition().duration(120)
-      .attr("r",18);
-
-    tlTip.style("opacity",1)
-      .style("left",e.clientX+20+"px")
-      .style("top",e.clientY+"px")
-      .html(`<b>${f.name}</b><br>${f.date}`);
+    markers.push(marker);
   });
+}
 
-  circle.on("mouseleave", function(){
-    d3.select(this)
-      .transition().duration(120)
-      .attr("r",12);
-
-    tlTip.style("opacity",0);
-  });
-
-  circle.on("click", function(){
-    const now = d3.select(this).attr("r");
-    const big = now == 12 ? 26 : 12;
-    d3.select(this).transition().duration(200).attr("r",big);
-  });
-
-  // title above
-  tlSVG.append("text")
-    .attr("x",f.x)
-    .attr("y",110)
-    .attr("opacity",0)
-    .attr("fill","#fef2c7")
-    .attr("text-anchor","middle")
-    .text(`${f.emoji} ${f.name}`)
-    .transition()
-    .delay(650 + i*250)
-    .duration(600)
-    .attr("opacity",1);
-
-  // date
-  tlSVG.append("text")
-    .attr("x",f.x)
-    .attr("y",160)
-    .attr("opacity",0)
-    .attr("fill","#c8a66a")
-    .attr("text-anchor","middle")
-    .text(f.date)
-    .transition()
-    .delay(750 + i*250)
-    .duration(600)
-    .attr("opacity",1);
-});
+loadMarkers();
 </script>
 
-<!-- ========================================================= -->
-<!-- ====================== ENDING SECTION =================== -->
-<!-- ========================================================= -->
-<div class="section" style="padding:80px 60px; text-align:center;">
-    <h1 class="gold-glow-title">Thank You for Exploring</h1>
-
-    <p style="font-size:20px; max-width:700px; margin:auto; line-height:1.8; margin-top:20px;">
-        This interactive dashboard visualizes the rich religious diversity of Singapore —  
-        from population composition, ethnic patterns, historical trends, sacred landmarks,  
-        to key annual festivals.  
-        <br><br>
-        May this visual journey inspire deeper understanding  
-        of harmony, culture, and the unique spiritual mosaic of Singapore.
-    </p>
-</div>
-
-<!-- ========================================================= -->
-<!-- ====================== MAGIC CURSOR ===================== -->
-<!-- ========================================================= -->
-<style>
-.magic-cursor {
-    position: fixed;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    pointer-events: none;
-    background: radial-gradient(circle, #ffd98a, #d8b46a, transparent);
-    filter: blur(2px);
-    z-index: 99999;
-    transform: translate(-50%, -50%);
-}
-</style>
 
 <div id="cursor" class="magic-cursor"></div>
 
