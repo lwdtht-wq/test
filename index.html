@@ -12,151 +12,206 @@
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
 <style>
-/* -------------------- GLOBAL STYLE -------------------- */
+/* ----------------------------------------------------
+   GLOBAL THEME: Black-Gold Magical Scroll Edition
+---------------------------------------------------- */
 body {
     margin: 0;
-    background: #0d0d0f;
-    font-family: "Cinzel", "Georgia", serif;
+    background: #0b0b0d;
     color: #f6d98a;
+    font-family: "Cinzel", serif;
+    overflow-x: hidden;
 }
 
-html {
-  scroll-behavior: smooth;
+html { scroll-behavior: smooth; }
+
+/* ===========================
+   PARALLAX BACKGROUND
+=========================== */
+.bg-parallax {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    background: url("https://images.unsplash.com/photo-1526401281623-359c1ac57c46?auto=format&fit=crop&w=1920&q=60")
+                center/cover no-repeat;
+    filter: brightness(0.25);
 }
 
-button {
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid #f6d98a;
-    font-family: inherit;
-    background: rgba(255,230,160,0.12);
-    color: #f6d98a;
-    cursor: pointer;
-    margin: 5px;
-}
-button:hover {
-    background: rgba(255,230,160,0.25);
+/* ===========================
+   GOLD PARTICLE EFFECT
+=========================== */
+#particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
 }
 
-/* Title */
-h1 {
+/* ===========================
+   MAGIC TITLE
+=========================== */
+.magic-title {
     text-align: center;
-    font-size: 40px;
+    font-size: 48px;
+    margin-top: 80px;
     letter-spacing: 3px;
-    margin: 40px 0 20px;
-    text-shadow: 0 0 20px rgba(255,215,130,0.35);
+    color: transparent;
+    background: linear-gradient(#f6d98a, #8a6b32);
+    -webkit-background-clip: text;
+    animation: shimmer 4s infinite linear;
+}
+@keyframes shimmer {
+    0% { text-shadow: 0 0 5px rgba(255,215,130,0.3); }
+    50% { text-shadow: 0 0 25px rgba(255,215,130,0.9); }
+    100% { text-shadow: 0 0 5px rgba(255,215,130,0.3); }
 }
 
+/* ===========================
+   SECTION PANEL WITH GLOW
+=========================== */
 .section {
-    padding: 60px 60px;
-    border-bottom: 1px solid rgba(255,220,150,0.15);
+    padding: 80px 60px;
 }
 
 .panel {
-    background: linear-gradient(145deg,#1a1a1d,#080808);
-    border: 1px solid rgba(255,220,150,0.25);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 
-        0 0 25px rgba(255,215,130,0.2),
-        inset 0 0 8px rgba(255,205,120,0.08);
-    margin: 30px auto;
-    max-width: 900px;
+    background: rgba(20,20,20,0.65);
+    padding: 35px;
+    border-radius: 22px;
+    border: 1px solid rgba(255,215,130,0.3);
+    max-width: 950px;
+    margin: auto;
+    backdrop-filter: blur(6px);
+
+    opacity: 0;
+    transform: scale(0.92);
+    animation: glowIn 1.2s forwards ease-out;
+}
+@keyframes glowIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.92);
+        box-shadow: 0 0 0px rgba(255,215,130,0.0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow:
+            0 0 18px rgba(255,215,130,0.25),
+            inset 0 0 8px rgba(255,200,120,0.25);
+    }
 }
 
-/* -------------------- NAVIGATION -------------------- */
+/* ===========================
+      NAVIGATION BAR
+=========================== */
 nav {
     position: fixed;
-    top: 0; 
-    left: 0; 
-    right: 0;
-    background: rgba(10,10,12,0.9);
+    top: 0; left: 0; right: 0;
+    background: rgba(15,15,18,0.85);
     backdrop-filter: blur(10px);
-    padding: 12px 20px;
     border-bottom: 1px solid rgba(255,215,130,0.25);
-    z-index: 999;
+    padding: 16px 30px;
+    z-index: 1000;
 }
-
 nav a {
     color: #f6d98a;
-    margin: 0 18px;
-    font-size: 16px;
+    margin: 0 22px;
+    font-size: 17px;
     text-decoration: none;
-    transition: 0.25s;
+    transition: 0.3s;
 }
-
 nav a:hover {
-    color: #fff3c8;
     text-shadow: 0 0 8px #f6d98a;
-}
-
-/* Tooltip */
-.tooltip {
-  position: fixed;
-  background: #1a1a1d;
-  border: 1px solid #f6d98a;
-  padding: 10px 12px;
-  border-radius: 10px;
-  pointer-events: none;
-  color: #f6d98a;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-/* Map */
-#map {
-  height: 480px;
-  border-radius: 15px;
-}
-
-/* Timeline */
-.timeline-box {
-    padding: 12px 20px;
-    background: rgba(255,215,130,0.08);
-    border: 1px solid rgba(255,215,130,0.25);
-    border-radius: 10px;
-    margin: 12px 0;
+    color: #fff4cc;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ==================== NAVIGATION ==================== -->
+<!-- Background Layers -->
+<div class="bg-parallax"></div>
+<canvas id="particles"></canvas>
+
+<!-- Navigation -->
 <nav>
     <a href="#intro">Home</a>
     <a href="#pie">Religious Composition</a>
     <a href="#trend">Trends</a>
-    <a href="#ethnicity">Ethnic Groups</a>
-    <a href="#mapSection">Religious Map</a>
-    <a href="#timeline">Festival Timeline</a>
+    <a href="#ethnicity">Ethnicity</a>
+    <a href="#mapSection">Map</a>
+    <a href="#timeline">Timeline</a>
 </nav>
 
-
-<!-- ========================================================= -->
-<!-- ====================== HOME ============================= -->
-<!-- ========================================================= -->
+<!-- ============================
+       HOME SECTION
+=============================== -->
 <div id="intro" class="section">
-    <h1>Singapore Religion Data</h1>
+    <h1 class="magic-title">Singapore Religion Data</h1>
 
     <div class="panel">
-        <p style="font-size:18px; line-height:1.8;">
-            Welcome to the Singapore Religion Visualization — a full interactive experience
-            exploring religious composition, long-term trends, ethnic patterns, major worship locations,
-            and festival timelines.
+        <p style="font-size:19px; line-height:1.85;">
+            Welcome to the enhanced magical-scroll visualization.
+            This webpage explores religion in Singapore using interactive charts,
+            animations, geographic mapping, and festival timelines —
+            wrapped in a mystical black-and-gold theme.
         </p>
     </div>
 </div>
 
+<!-- ============================
+   GOLD PARTICLE SCRIPT
+=============================== -->
+<script>
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
 
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+let particles = [];
+for (let i = 0; i < 120; i++) {
+    particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2 + 1,
+        d: Math.random() * 0.7 + 0.2
+    });
+}
+
+function animateParticles() {
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = "rgba(246,217,138,0.9)";
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = "#f6d98a";
+
+    particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fill();
+        p.y += p.d;
+        if (p.y > h) { p.y = -5; p.x = Math.random() * w; }
+    });
+
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
+</script>
 <!-- ========================================================= -->
 <!-- ====================== PIE CHART ======================== -->
 <!-- ========================================================= -->
 <div id="pie" class="section">
-    <h1>Religious Composition (2020)</h1>
+    <h1 class="magic-title">Religious Composition (2020)</h1>
 
     <div class="panel">
-        <svg id="pieSVG" width="900" height="500"></svg>
+        <svg id="pieSVG" width="900" height="520"></svg>
         <div class="tooltip" id="pieTip"></div>
     </div>
 </div>
@@ -173,97 +228,110 @@ const pieData = [
   {religion:"No Religion", val:20.0},
 ];
 
-// Layout
-const PW = 900, PH = 500;
-const cx = PW / 2;   // 让饼图水平居中
-const cy = PH / 2;   // 垂直居中
-const radius = 150;
+// SVG Layout
+const PW = 900, PH = 520;
+const cx = PW/2, cy = PH/2;
+const radius = 160;
 
 const pieSvg = d3.select("#pieSVG");
-const pg = pieSvg.append("g").attr("transform", `translate(${cx},${cy})`);
+const pg = pieSvg.append("g")
+    .attr("transform", `translate(${cx},${cy})`);
 
 const pieTip = d3.select("#pieTip");
 
 // Colors
 const pieColor = d3.scaleOrdinal()
-  .domain(pieData.map(d=>d.religion))
-  .range(["#f6d98a","#d8b46a","#f1cc8f","#c9a35a","#e8c377","#b89349","#ffdf9e"]);
+    .domain(pieData.map(d => d.religion))
+    .range(["#f6d98a","#d8b46a","#f1cc8f","#c9a35a",
+            "#e8c377","#b89349","#ffdf9e"]);
 
 // Generators
 const pieGen = d3.pie().value(d => d.val);
-const arc = d3.arc().innerRadius(70).outerRadius(radius);
-const arcLine = d3.arc().innerRadius(radius+20).outerRadius(radius+20);
+const arc = d3.arc().innerRadius(80).outerRadius(radius);
+const arcLine = d3.arc().innerRadius(radius + 25).outerRadius(radius + 25);
 
-// ----------------------------- PIE + ANIMATION -----------------------------
+// ----------------------------- ARC ANIMATION -----------------------------
 pg.selectAll("path")
   .data(pieGen(pieData))
   .enter()
   .append("path")
   .attr("fill", d => pieColor(d.data.religion))
   .attr("stroke", "#000")
-  .attr("stroke-width", 0.4)
+  .attr("stroke-width", 0.5)
+  .attr("opacity", 0)
   .transition()
-  .duration(1200)
+  .delay((d,i)=> i*180)
+  .duration(1100)
+  .attr("opacity", 1)
   .attrTween("d", function(d){
-    let i = d3.interpolate({startAngle:0,endAngle:0}, d);
-    return t => arc(i(t));
+      let i = d3.interpolate(
+          {startAngle:0, endAngle:0},
+          d
+      );
+      return t => arc(i(t));
   });
 
-// ----------------------------- HOVER -----------------------------
+// ----------------------------- HOVER INTERACTION -----------------------------
 pg.selectAll("path")
   .on("mouseenter", function(event, d){
-    d3.select(this)
-      .transition().duration(150)
-      .attr("transform", "scale(1.05)");
+      d3.select(this)
+        .transition().duration(150)
+        .attr("transform", "scale(1.06)");
 
-    pieTip.style("opacity", 1)
-      .html(`<b>${d.data.religion}</b><br>${d.data.val}%`)
-      .style("left", event.clientX + 20 + "px")
-      .style("top", event.clientY - 10 + "px");
+      pieTip.style("opacity", 1)
+        .html(`<b>${d.data.religion}</b><br>${d.data.val}%`)
+        .style("left", event.clientX + 20 + "px")
+        .style("top", event.clientY - 10 + "px");
   })
   .on("mouseleave", function(){
-    d3.select(this)
-      .transition().duration(150)
-      .attr("transform", "scale(1)");
-    pieTip.style("opacity", 0);
+      d3.select(this)
+        .transition().duration(150)
+        .attr("transform", "scale(1)");
+
+      pieTip.style("opacity", 0);
   });
 
 // ----------------------------- CLICK EXPLODE -----------------------------
 pg.selectAll("path")
   .on("click", function(event, d){
-    const off = 15;
-    const mid = (d.startAngle + d.endAngle) / 2;
-    const dx = Math.cos(mid) * off;
-    const dy = Math.sin(mid) * off;
-    d3.select(this)
-      .transition().duration(250)
-      .attr("transform", `translate(${dx},${dy})`);
+      const mid = (d.startAngle + d.endAngle) / 2;
+      const dx = Math.cos(mid) * 18;
+      const dy = Math.sin(mid) * 18;
+
+      d3.select(this)
+        .transition().duration(250)
+        .attr("transform", `translate(${dx},${dy})`);
   });
 
-// ----------------------------- LABEL LAYOUT (NO OVERLAP) -----------------------------
-let labels = pieGen(pieData).map(d=>{
-  let [lx, ly] = arcLine.centroid(d);
-  const side = lx > 0 ? "right" : "left";
-  return {...d, side: side, rawX: lx, rawY: ly};
+// ----------------------------- NON-OVERLAP LABELS -----------------------------
+let labels = pieGen(pieData).map(d => {
+    let [lx, ly] = arcLine.centroid(d);
+    return {
+        ...d,
+        side: lx > 0 ? "right" : "left",
+        rawX: lx,
+        rawY: ly
+    };
 });
 
-let left = labels.filter(d => d.side === "left");
-let right = labels.filter(d => d.side === "right");
+let left = labels.filter(d => d.side === "left")
+                  .sort((a,b) => a.rawY - b.rawY);
+let right = labels.filter(d => d.side === "right")
+                   .sort((a,b) => a.rawY - b.rawY);
 
-left.sort((a,b)=>a.rawY - b.rawY);
-right.sort((a,b)=>a.rawY - b.rawY);
-
-function distribute(list, topY, bottomY){
-  const gap = (bottomY - topY) / (list.length - 1 || 1);
-  list.forEach((d,i)=>{ d.finalY = topY + gap * i; });
+// distribute vertically
+function distribute(list, minY, maxY) {
+    if (list.length === 1) { list[0].finalY = 0; return; }
+    const step = (maxY - minY) / (list.length - 1);
+    list.forEach((d,i)=> d.finalY = minY + step*i );
 }
+distribute(left, -180, 180);
+distribute(right, -180, 180);
 
-distribute(left, -160, 160);
-distribute(right, -160, 160);
-
+// Merge
 labels = [...left, ...right];
 
-// Polylines
+// Connecting Lines
 pieSvg.append("g")
   .selectAll("polyline")
   .data(labels)
@@ -273,38 +341,41 @@ pieSvg.append("g")
   .attr("stroke-width", 1.3)
   .attr("fill", "none")
   .attr("points", d => {
-    const p1 = arc.centroid(d).map((p,i)=>(i? p+cy : p+cx));
-    const p2 = arcLine.centroid(d).map((p,i)=>(i? p+cy : p+cx));
-    const p3 = [
-      d.side === "right" ? cx + 280 : cx - 280,
-      cy + d.finalY
-    ];
-    return [p1, p2, p3];
+      const p1 = arc.centroid(d).map((p,i)=> (i? p+cy : p+cx));
+      const p2 = arcLine.centroid(d).map((p,i)=> (i? p+cy : p+cx));
+      const p3 = [
+          d.side === "right" ? cx + 300 : cx - 300,
+          cy + d.finalY
+      ];
+      return [p1, p2, p3];
   });
 
-// Labels
+// Final Text Labels
 pieSvg.append("g")
   .selectAll("text")
   .data(labels)
   .enter()
   .append("text")
-  .attr("x", d => d.side === "right" ? cx + 300 : cx - 300)
+  .attr("x", d => d.side === "right" ? cx + 320 : cx - 320)
   .attr("y", d => cy + d.finalY + 5)
   .attr("text-anchor", d => d.side === "right" ? "start" : "end")
-  .attr("font-size", 15)
   .attr("fill", "#f6d98a")
+  .attr("font-size", 16)
+  .style("opacity", 0)
+  .transition()
+  .delay((d,i)=> 600 + i*80)
+  .duration(500)
+  .style("opacity",1)
   .text(d => `${d.data.religion}: ${d.data.val}%`);
 </script>
-
-
 <!-- ========================================================= -->
 <!-- ====================== TREND LINES ====================== -->
 <!-- ========================================================= -->
 <div id="trend" class="section">
-    <h1>Religious Trend (1965–2020)</h1>
+    <h1 class="magic-title">Religious Trend (1965–2020)</h1>
 
     <div class="panel">
-        <svg id="trendSVG" width="600" height="400"></svg>
+        <svg id="trendSVG" width="720" height="420"></svg>
     </div>
 </div>
 
@@ -326,8 +397,8 @@ const trendColors = {
 };
 
 const tsvg = d3.select("#trendSVG");
-const tw = 600, th = 400;
-const tm = {top:40,right:80,bottom:40,left:50};
+const tw = 720, th = 420;
+const tm = {top:40,right:100,bottom:40,left:60};
 
 const tx = d3.scaleLinear()
   .domain(d3.extent(trendData, d=>d.year))
@@ -337,6 +408,7 @@ const ty = d3.scaleLinear()
   .domain([0,40])
   .range([th-tm.bottom, tm.top]);
 
+// Axes -------------------------------------------------------
 tsvg.append("g")
   .attr("transform",`translate(0,${th-tm.bottom})`)
   .call(d3.axisBottom(tx).tickFormat(d3.format("d")))
@@ -347,232 +419,100 @@ tsvg.append("g")
   .call(d3.axisLeft(ty))
   .selectAll("text").attr("fill","#f8d998");
 
-const religions = ["buddhist","christian","islam"];
-
-// Tooltip
+// Tooltip ----------------------------------------------------
 const trendTip = d3.select("body")
   .append("div")
-  .style("position","fixed")
-  .style("padding","8px 10px")
-  .style("background","#1a1a1d")
-  .style("color","#f6d98a")
-  .style("border","1px solid #f1d08f")
-  .style("border-radius","8px")
-  .style("pointer-events","none")
-  .style("opacity",0)
-  .style("font-size","13px");
+  .attr("class","tooltip");
 
-function showTrendTip(event,text){
-  trendTip.html(text)
-    .style("left",(event.clientX+15)+"px")
-    .style("top",(event.clientY-10)+"px")
-    .transition().duration(100)
-    .style("opacity",1);
-}
-function hideTrendTip(){
-  trendTip.transition().duration(150).style("opacity",0);
-}
-
-// Draw lines
-religions.forEach(key=>{
+// Draw Lines + Animation -------------------------------------
+["buddhist","christian","islam"].forEach(key => {
 
   const line = d3.line()
-      .x(d=>tx(d.year))
-      .y(d=>ty(d[key]));
+      .x(d => tx(d.year))
+      .y(d => ty(d[key]));
 
   const path = tsvg.append("path")
       .datum(trendData)
       .attr("fill","none")
-      .attr("stroke",trendColors[key])
-      .attr("stroke-width",2)
+      .attr("stroke", trendColors[key])
+      .attr("stroke-width", 2)
       .attr("d",line);
 
   const length = path.node().getTotalLength();
 
-  // Animation
-  path
-    .attr("stroke-dasharray",length)
-    .attr("stroke-dashoffset",length)
-    .transition()
-    .duration(1500)
-    .ease(d3.easeCubic)
-    .attr("stroke-dashoffset",0);
+  // entering animation
+  path.attr("stroke-dasharray", length)
+      .attr("stroke-dashoffset", length)
+      .transition()
+      .duration(1800)
+      .ease(d3.easeCubic)
+      .attr("stroke-dashoffset", 0);
 
-  // Dots
-  const dots = tsvg.selectAll(`.dot-${key}`)
+  // Data dots ------------------------------------------------
+  const dots = tsvg.append("g")
+      .selectAll(`.dot-${key}`)
       .data(trendData)
       .enter()
       .append("circle")
       .attr("class",`dot-${key}`)
       .attr("cx",d=>tx(d.year))
       .attr("cy",d=>ty(d[key]))
-      .attr("r",4)
+      .attr("r",0)
       .attr("fill",trendColors[key])
-      .style("transition","0.25s");
+      .transition()
+      .delay((d,i)=> 400 + i*120)
+      .duration(500)
+      .attr("r",5);
 
-  dots.on("mouseenter", function(e,d){
-      d3.select(this)
-        .transition().duration(150)
-        .attr("r",7)
-        .attr("fill","#fff6dc");
+  // Hover effect --------------------------------------------
+  tsvg.selectAll(`.dot-${key}`)
+    .on("mouseenter", function(e, d){
+        d3.select(this)
+          .transition().duration(150)
+          .attr("r",9)
+          .attr("fill","#fff4d0");
 
-      showTrendTip(e, `${key}: ${d[key]}%`);
-  });
+        trendTip.html(`<b>${key.toUpperCase()}</b><br>${d[key]}%`)
+          .style("left", e.clientX+15+"px")
+          .style("top", e.clientY+"px")
+          .style("opacity",1);
+    })
+    .on("mouseleave", function(){
+        d3.select(this)
+          .transition().duration(150)
+          .attr("r",5)
+          .attr("fill",trendColors[key]);
 
-  dots.on("mouseleave", function(e,d){
-      d3.select(this)
-        .transition().duration(150)
-        .attr("r",4)
-        .attr("fill",trendColors[key]);
+        trendTip.style("opacity",0);
+    });
 
-      hideTrendTip();
-  });
-
-  // Legend
+  // Legend Interactivity ------------------------------------
   tsvg.append("text")
-      .attr("x", tw-tm.right+10)
-      .attr("y", tm.top + religions.indexOf(key)*30)
-      .text(key.charAt(0).toUpperCase()+key.slice(1))
-      .attr("fill", trendColors[key])
-      .style("cursor","pointer")
-      .on("click", ()=>{
-
-         const currentOpacity = path.style("opacity") == 1 ? 0 : 1;
-
-         path.transition().duration(600).style("opacity",currentOpacity);
-         dots.transition().duration(600).style("opacity",currentOpacity);
-
-         if(currentOpacity==1){
-           path
-             .attr("stroke-dashoffset",length)
-             .transition().duration(1500)
-             .attr("stroke-dashoffset",0);
-         }
-      });
-});
-</script>
-
-
-<!-- ========================================================= -->
-<!-- ====================== ETHNICITY STACK ================== -->
-<!-- ========================================================= -->
-<div id="ethnicity" class="section">
-    <h1>Ethnicity × Religion (Census 2020)</h1>
-
-    <div class="panel">
-        <svg id="stackSvg" width="760" height="420"></svg>
-        <div class="tooltip" id="stackTip"></div>
-    </div>
-</div>
-
-<script>
-// ------------------------------ DATA ------------------------------
-const raceData = [
-  {race:"Chinese", Buddhist:33, Christian:20, Islam:1,  Hindu:0.4, None:20},
-  {race:"Malay",   Buddhist:1,  Christian:10, Islam:84, Hindu:0.3, None:1},
-  {race:"Indian",  Buddhist:5,  Christian:19, Islam:24, Hindu:55,  None:2},
-];
-
-const groups = ["Buddhist","Christian","Islam","Hindu","None"];
-
-const colors = {
-  Buddhist:"#f6d98a",
-  Christian:"#d8b46a",
-  Islam:"#ffdf9e",
-  Hindu:"#e8c377",
-  None:"#c9a35a"
-};
-
-// SVG
-const svgE = d3.select("#stackSvg");
-const EW = 760, EH = 420;
-const Em = {top:40, right:40, bottom:40, left:90};
-
-const ex = d3.scaleLinear().domain([0,100]).range([Em.left, EW - Em.right]);
-const ey = d3.scaleBand().domain(raceData.map(d => d.race))
-      .range([Em.top, EH - Em.bottom]).padding(0.4);
-
-// Axes
-svgE.append("g")
-  .attr("transform", `translate(0,${EH - Em.bottom})`)
-  .call(d3.axisBottom(ex))
-  .selectAll("text").attr("fill","#f6d98a");
-
-svgE.append("g")
-  .attr("transform", `translate(${Em.left},0)`)
-  .call(d3.axisLeft(ey))
-  .selectAll("text").attr("fill","#f6d98a");
-
-// Stack
-const stackBar = d3.stack().keys(groups);
-const layers = stackBar(raceData);
-
-// Tooltip
-const tipE = d3.select("#stackTip");
-
-// Draw rect
-layers.forEach(layer => {
-  svgE.selectAll(`rect.layer-${layer.key}`)
-    .data(layer)
-    .enter()
-    .append("rect")
-    .attr("class", `layer-${layer.key}`)
-    .attr("x", d => ex(d[0]))
-    .attr("y", d => ey(d.data.race))
-    .attr("height", ey.bandwidth())
-    .attr("width", 0)
-    .attr("fill", colors[layer.key])
-    .transition()
-    .duration(900)
-    .attr("width", d => ex(d[1]) - ex(d[0]));
-});
-
-// Interaction
-svgE.selectAll("rect")
-  .on("mouseenter", function(event, d){
-    const religion = Object.keys(d.data).find(key =>
-      d.data[key] === d[1]-d[0]
-    );
-
-    d3.select(this)
-      .transition().duration(150)
-      .attr("transform", "scale(1.03)");
-
-    tipE.style("opacity",1)
-      .html(`<b>${d.data.race}</b><br>${religion}: ${d[1]-d[0]}%`)
-      .style("left", event.clientX + 15 + "px")
-      .style("top", event.clientY + "px");
-  })
-  .on("mouseleave", function(){
-    d3.select(this)
-      .transition().duration(150)
-      .attr("transform", "scale(1)");
-
-    tipE.style("opacity",0);
-  });
-
-// Legend toggle
-groups.forEach((key, i) => {
-  svgE.append("text")
-    .attr("x", EW - 120)
-    .attr("y", Em.top + i*25)
-    .attr("fill", colors[key])
-    .text(key)
+    .attr("x", tw - tm.right + 20)
+    .attr("y", tm.top + ["buddhist","christian","islam"].indexOf(key)*30)
+    .attr("fill", trendColors[key])
+    .attr("font-size", 16)
     .style("cursor","pointer")
-    .on("click", ()=>{
-      const rects = svgE.selectAll(`.layer-${key}`);
-      const current = rects.style("opacity") == 1 ? 0 : 1;
-      rects.transition().duration(400).style("opacity", current);
+    .text(key.charAt(0).toUpperCase() + key.slice(1))
+    .on("click", () => {
+        const visible = path.style("opacity") == 1 ? 0 : 1;
+        path.transition().duration(600).style("opacity",visible);
+        tsvg.selectAll(`.dot-${key}`)
+            .transition().duration(600).style("opacity",visible);
+
+        if (visible == 1) {
+          path.attr("stroke-dashoffset", length)
+              .transition().duration(1500)
+              .attr("stroke-dashoffset", 0);
+        }
     });
 });
 </script>
-
-
 <!-- ========================================================= -->
 <!-- ====================== MAP SECTION ====================== -->
 <!-- ========================================================= -->
 <div id="mapSection" class="section">
-    <h1>Map of Major Religious Sites</h1>
+    <h1 class="magic-title">Map of Major Religious Sites</h1>
 
     <div class="panel" style="text-align:center; margin-bottom:25px;">
         <button onclick="loadMarkers(null)">All</button>
@@ -588,7 +528,9 @@ groups.forEach((key, i) => {
 </div>
 
 <script>
-// Map
+// --------------------------------------------------------------
+// MAP INITIALISATION
+// --------------------------------------------------------------
 const map = L.map("map", {scrollWheelZoom:true}).setView([1.3521,103.8198],12);
 
 L.tileLayer(
@@ -596,6 +538,7 @@ L.tileLayer(
 {}
 ).addTo(map);
 
+// Emoji marker styles -----------------------------------------
 const iconHTML = {
   temple:"🔱",
   mosque:"🕌",
@@ -608,12 +551,12 @@ function createIcon(type){
     className:"",
     html:`<div style="
       transform: scale(0);
-      animation: popIn 0.4s forwards;
-      font-size: 30px;">${iconHTML[type]}</div>`
+      animation: popIn 0.5s forwards;
+      font-size: 32px;">${iconHTML[type]}</div>`
   });
 }
 
-// animation effect
+// Pop animation
 const styleAnim = document.createElement("style");
 styleAnim.innerHTML = `
 @keyframes popIn {
@@ -623,7 +566,7 @@ styleAnim.innerHTML = `
 }`;
 document.head.appendChild(styleAnim);
 
-// Example sites
+// Example religious sites --------------------------------------
 const sites = [
     {name:"Buddha Tooth Relic Temple", type:"temple", lat:1.2814, lng:103.8443},
     {name:"Thian Hock Keng", type:"temple", lat:1.2804, lng:103.8480},
@@ -655,13 +598,11 @@ function loadMarkers(filter=null){
 
 loadMarkers();
 </script>
-
-
 <!-- ========================================================= -->
 <!-- ====================== TIMELINE SECTION ================= -->
 <!-- ========================================================= -->
 <div id="timeline" class="section">
-    <h1>Religious Festivals Timeline</h1>
+    <h1 class="magic-title">Religious Festivals Timeline</h1>
 
     <div class="panel">
         <svg id="timelineSVG" width="900" height="260"></svg>
@@ -677,49 +618,52 @@ loadMarkers();
 
 <script>
 const festivals = [
-  {name:"Chinese New Year", date:"Jan–Feb", emoji:"🧧", x:120},
-  {name:"Hari Raya", date:"Apr", emoji:"🕌", x:300},
-  {name:"Vesak Day", date:"May", emoji:"🪷", x:500},
-  {name:"Deepavali", date:"Nov", emoji:"🪔", x:720}
+  {name:"Chinese New Year", date:"Jan–Feb", emoji:"🧧", x:140},
+  {name:"Hari Raya", date:"Apr", emoji:"🕌", x:340},
+  {name:"Vesak Day", date:"May", emoji:"🪷", x:560},
+  {name:"Deepavali", date:"Nov", emoji:"🪔", x:780}
 ];
 
 const tlSVG = d3.select("#timelineSVG");
 
-// baseline
+// baseline animation ------------------------------------------
 tlSVG.append("line")
-    .attr("x1",80).attr("x2",80)
+    .attr("x1",120).attr("x2",120)
     .attr("y1",130).attr("y2",130)
     .attr("stroke","#f6d98a").attr("stroke-width",3)
     .transition().duration(900)
-    .attr("x2",820);
+    .attr("x2",840);
 
 // Tooltip
 const tlTip = d3.select("body").append("div").attr("class","tooltip");
 
+// Render events ------------------------------------------------
 festivals.forEach((f,i)=>{
 
+  // Main filled circle ----------------------------------------
   tlSVG.append("circle")
-    .attr("cx",f.x)
-    .attr("cy",130)
-    .attr("r",0)
+    .attr("cx", f.x)
+    .attr("cy", 130)
+    .attr("r", 0)
     .attr("fill","#f6d98a")
-    .style("filter","drop-shadow(0 0 6px rgba(255,215,130,1))")
+    .style("filter","drop-shadow(0 0 8px rgba(255,215,130,1))")
     .transition()
-    .delay(300 + i*250)
+    .delay(300 + i*320)
     .duration(600)
-    .attr("r",12);
+    .attr("r", 14);
 
+  // Interactive halo circle -----------------------------------
   const circle = tlSVG.append("circle")
-    .attr("cx",f.x)
-    .attr("cy",130)
-    .attr("r",12)
+    .attr("cx", f.x)
+    .attr("cy", 130)
+    .attr("r", 14)
     .attr("fill","transparent")
     .style("cursor","pointer");
 
   circle.on("mousemove", function(e){
     d3.select(this)
       .transition().duration(120)
-      .attr("r",18);
+      .attr("r",22);
 
     tlTip.style("opacity",1)
       .style("left",e.clientX+20+"px")
@@ -730,42 +674,36 @@ festivals.forEach((f,i)=>{
   circle.on("mouseleave", function(){
     d3.select(this)
       .transition().duration(120)
-      .attr("r",12);
+      .attr("r",14);
 
     tlTip.style("opacity",0);
   });
 
-  circle.on("click", function(){
-    const now = d3.select(this).attr("r");
-    const big = now == 12 ? 26 : 12;
-    d3.select(this).transition().duration(200).attr("r",big);
-  });
-
+  // Labels -----------------------------------------------------
   tlSVG.append("text")
     .attr("x",f.x)
     .attr("y",110)
     .attr("opacity",0)
-    .attr("fill","#fef2c7")
+    .attr("fill","#ffeec2")
     .attr("text-anchor","middle")
     .text(`${f.emoji} ${f.name}`)
     .transition()
-    .delay(650 + i*250)
+    .delay(650 + i*300)
     .duration(600)
     .attr("opacity",1);
 
   tlSVG.append("text")
     .attr("x",f.x)
-    .attr("y",160)
+    .attr("y",165)
     .attr("opacity",0)
     .attr("fill","#c8a66a")
     .attr("text-anchor","middle")
     .text(f.date)
     .transition()
-    .delay(750 + i*250)
+    .delay(760 + i*300)
     .duration(600)
     .attr("opacity",1);
 });
 </script>
-
 </body>
 </html>
