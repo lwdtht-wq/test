@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Singapore Religion data</title>
+<title>Singapore Religion Data</title>
 
 <!-- D3.js -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -12,18 +12,20 @@
 <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
 <style>
-/* -------------------- GLOBAL STYLE -------------------- */
+/* -----------------------------------------------------------
+   GLOBAL BLACK-GOLD STYLE
+----------------------------------------------------------- */
 body {
     margin: 0;
     background: #0d0d0f;
     font-family: "Cinzel", "Georgia", serif;
     color: #f6d98a;
+    overflow-x: hidden;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
+/* BUTTON */
 button {
     padding: 10px 16px;
     border-radius: 8px;
@@ -33,23 +35,14 @@ button {
     color: #f6d98a;
     cursor: pointer;
     margin: 5px;
+    transition: 0.3s;
 }
-button:hover {
-    background: rgba(255,230,160,0.25);
-}
+button:hover { background: rgba(255,230,160,0.3); }
 
-/* Title */
-h1 {
-    text-align: center;
-    font-size: 40px;
-    letter-spacing: 3px;
-    margin: 40px 0 20px;
-    text-shadow: 0 0 20px rgba(255,215,130,0.35);
-}
-
+/* SECTION */
 .section {
     padding: 60px 60px;
-    border-bottom: 1px solid rgba(255,220,150,0.15);
+    border-bottom: 1px solid rgba(255,220,150,0.12);
 }
 
 .panel {
@@ -64,19 +57,32 @@ h1 {
     max-width: 900px;
 }
 
-/* -------------------- NAVIGATION -------------------- */
+/* TITLE */
+h1 {
+    text-align: center;
+    font-size: 40px;
+    letter-spacing: 2px;
+    margin: 40px 0 20px;
+    color: #f6d98a;
+    text-shadow: 0 0 15px rgba(255,230,160,0.4);
+    animation: fadeInTitle 1.5s ease-out;
+}
+
+@keyframes fadeInTitle {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* NAV */
 nav {
     position: fixed;
-    top: 0; 
-    left: 0; 
-    right: 0;
+    top: 0; left: 0; right: 0;
     background: rgba(10,10,12,0.9);
     backdrop-filter: blur(10px);
     padding: 12px 20px;
-    border-bottom: 1px solid rgba(255,215,130,0.25);
+    border-bottom: 1px solid rgba(255,215,130,0.2);
     z-index: 999;
 }
-
 nav a {
     color: #f6d98a;
     margin: 0 18px;
@@ -84,45 +90,142 @@ nav a {
     text-decoration: none;
     transition: 0.25s;
 }
-
 nav a:hover {
-    color: #fff3c8;
+    color: #fff4d0;
     text-shadow: 0 0 8px #f6d98a;
 }
 
-/* Tooltip */
+/* TOOLTIP */
 .tooltip {
-  position: fixed;
-  background: #1a1a1d;
-  border: 1px solid #f6d98a;
-  padding: 10px 12px;
-  border-radius: 10px;
-  pointer-events: none;
-  color: #f6d98a;
-  opacity: 0;
-  transition: opacity 0.2s;
+    position: fixed;
+    background: #1a1a1d;
+    border: 1px solid #f6d98a;
+    padding: 10px 12px;
+    border-radius: 10px;
+    pointer-events: none;
+    color: #f6d98a;
+    opacity: 0;
+    transition: 0.2s;
 }
 
-/* Map */
+/* MAP */
 #map {
-  height: 480px;
-  border-radius: 15px;
+    height: 480px;
+    border-radius: 15px;
 }
 
-/* Timeline */
+/* TIMELINE CARD */
 .timeline-box {
-    padding: 12px 20px;
-    background: rgba(255,215,130,0.08);
+    background: rgba(255,215,130,0.07);
     border: 1px solid rgba(255,215,130,0.25);
+    padding: 12px 20px;
     border-radius: 10px;
     margin: 12px 0;
+}
+
+/* -----------------------------------------------------------
+   MAGIC CURSOR + PARTICLE TAIL
+----------------------------------------------------------- */
+#magic-cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, #ffe9b0 0%, #d8b46a 70%, transparent 100%);
+    mix-blend-mode: screen;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+.particle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #f6d98a, transparent);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.9;
+    filter: blur(1px);
+    z-index: 9998;
+}
+
+/* -----------------------------------------------------------
+   GOLD DUST FALLING EFFECT
+----------------------------------------------------------- */
+.gold-dust {
+    position: fixed;
+    top: -10px;
+    width: 5px;
+    height: 5px;
+    background: radial-gradient(circle, #ffebc2, #d6aa4c);
+    border-radius: 50%;
+    opacity: 0.8;
+    pointer-events: none;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(120vh); opacity: 0; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- ==================== NAVIGATION ==================== -->
+<!-- MAGIC CURSOR -->
+<div id="magic-cursor"></div>
+
+<script>
+/* -----------------------------------------------------------
+   MAGIC CURSOR FOLLOW LOGIC
+----------------------------------------------------------- */
+const cursor = document.getElementById("magic-cursor");
+document.addEventListener("mousemove", e => {
+    cursor.style.left = e.clientX + "px";
+    cursor.style.top = e.clientY + "px";
+});
+
+/* -----------------------------------------------------------
+   PARTICLE TRAIL
+----------------------------------------------------------- */
+document.addEventListener("mousemove", e => {
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.left = e.clientX + "px";
+    p.style.top = e.clientY + "px";
+
+    document.body.appendChild(p);
+
+    const driftX = (Math.random() - 0.5) * 30;
+    const driftY = (Math.random() - 0.5) * 30;
+
+    p.animate([
+        { transform: "translate(0,0)", opacity: 0.9 },
+        { transform: `translate(${driftX}px, ${driftY}px)`, opacity: 0 }
+    ], {
+        duration: 800
+    });
+
+    setTimeout(()=>p.remove(), 800);
+});
+
+/* -----------------------------------------------------------
+   GOLD DUST RAIN (25 particles)
+----------------------------------------------------------- */
+function spawnDust() {
+    const d = document.createElement("div");
+    d.className = "gold-dust";
+    d.style.left = Math.random() * 100 + "vw";
+    d.style.animationDuration = (3 + Math.random()*4) + "s";
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(), 7000);
+}
+setInterval(spawnDust, 400);
+</script>
+
+<!-- NAVIGATION -->
 <nav>
     <a href="#intro">Home</a>
     <a href="#pie">Religious Composition</a>
@@ -131,34 +234,44 @@ nav a:hover {
     <a href="#mapSection">Religious Map</a>
     <a href="#timeline">Festival Timeline</a>
 </nav>
-
-
 <!-- ========================================================= -->
-<!-- ====================== HOME ============================= -->
+<!-- ====================== HOME SECTION ====================== -->
 <!-- ========================================================= -->
 <div id="intro" class="section">
     <h1>Singapore Religion Data</h1>
 
-    <div class="panel">
+    <div class="panel" style="animation: fadeInPanel 1.2s ease-out;">
         <p style="font-size:18px; line-height:1.8;">
-            Welcome to the Singapore Religion Visualization — a full interactive experience
-            exploring religious composition, long-term trends, ethnic patterns, major worship locations,
-            and festival timelines.
+            Welcome to the Singapore Religion Visualization — an immersive,
+            interactive experience exploring:
             <br><br>
-            All visualisations are crafted in a mystical black-and-gold theme, with animations,
-            hover highlights, clickable legends, transitions, and dynamic maps.
+            • Religious composition (2020)<br>
+            • Historical trends across 50+ years<br>
+            • Religion × ethnicity relationships<br>
+            • Major worship sites in Singapore<br>
+            • Annual festival timeline<br><br>
+            Designed in a mystical black-gold theme, enhanced with animations,
+            particle effects, glowing highlights, parallax motion,
+            magical cursor trails, and smooth transitions.
         </p>
     </div>
 </div>
 
+<style>
+@keyframes fadeInPanel {
+    0% { opacity: 0; transform: translateY(25px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+</style>
+
 
 <!-- ========================================================= -->
-<!-- ====================== PIE CHART ======================== -->
+<!-- ====================== PIE CHART SECTION ================= -->
 <!-- ========================================================= -->
 <div id="pie" class="section">
-    <h1>Religious Composition (2020)</h1>
+    <h1 style="animation: fadeInTitle 1.2s;">Religious Composition (2020)</h1>
 
-    <div class="panel">
+    <div class="panel" style="animation: fadeInPanel 1.2s;">
         <svg id="pieSVG" width="900" height="500"></svg>
         <div class="tooltip" id="pieTip"></div>
     </div>
@@ -178,8 +291,8 @@ const pieData = [
 
 // Layout
 const PW = 900, PH = 500;
-const cx = PW / 2;   // 让饼图水平居中
-const cy = PH / 2;   // 垂直居中
+const cx = PW / 2;
+const cy = PH / 2;
 const radius = 150;
 
 const pieSvg = d3.select("#pieSVG");
@@ -197,7 +310,7 @@ const pieGen = d3.pie().value(d => d.val);
 const arc = d3.arc().innerRadius(70).outerRadius(radius);
 const arcLine = d3.arc().innerRadius(radius+20).outerRadius(radius+20);
 
-// ----------------------------- PIE + ANIMATION -----------------------------
+// ----------------------------- PIE ARC ANIMATION -----------------------------
 pg.selectAll("path")
   .data(pieGen(pieData))
   .enter()
@@ -212,7 +325,7 @@ pg.selectAll("path")
     return t => arc(i(t));
   });
 
-// ----------------------------- HOVER -----------------------------
+// ----------------------------- HOVER EFFECT -----------------------------
 pg.selectAll("path")
   .on("mouseenter", function(event, d){
     d3.select(this)
@@ -228,26 +341,28 @@ pg.selectAll("path")
     d3.select(this)
       .transition().duration(150)
       .attr("transform", "scale(1)");
+      
     pieTip.style("opacity", 0);
   });
 
-// ----------------------------- CLICK EXPLODE -----------------------------
+// ----------------------------- EXPLODE ON CLICK -----------------------------
 pg.selectAll("path")
   .on("click", function(event, d){
     const off = 15;
     const mid = (d.startAngle + d.endAngle) / 2;
     const dx = Math.cos(mid) * off;
     const dy = Math.sin(mid) * off;
+
     d3.select(this)
       .transition().duration(250)
       .attr("transform", `translate(${dx},${dy})`);
   });
 
-// ----------------------------- LABEL LAYOUT (NO OVERLAP) -----------------------------
+// ----------------------------- LABELS (NO OVERLAP) -----------------------------
 let labels = pieGen(pieData).map(d=>{
   let [lx, ly] = arcLine.centroid(d);
   const side = lx > 0 ? "right" : "left";
-  return {...d, side: side, rawX: lx, rawY: ly};
+  return {...d, side, rawX: lx, rawY: ly};
 });
 
 let left = labels.filter(d => d.side === "left");
@@ -258,7 +373,7 @@ right.sort((a,b)=>a.rawY - b.rawY);
 
 function distribute(list, topY, bottomY){
   const gap = (bottomY - topY) / (list.length - 1 || 1);
-  list.forEach((d,i)=>{ d.finalY = topY + gap * i; });
+  list.forEach((d,i)=>d.finalY = topY + gap * i);
 }
 
 distribute(left, -160, 160);
@@ -266,7 +381,7 @@ distribute(right, -160, 160);
 
 labels = [...left, ...right];
 
-// Polylines
+// Connecting lines
 pieSvg.append("g")
   .selectAll("polyline")
   .data(labels)
@@ -276,8 +391,8 @@ pieSvg.append("g")
   .attr("stroke-width", 1.3)
   .attr("fill", "none")
   .attr("points", d => {
-    const p1 = arc.centroid(d).map((p,i)=>(i? p+cy : p+cx));
-    const p2 = arcLine.centroid(d).map((p,i)=>(i? p+cy : p+cx));
+    const p1 = arc.centroid(d).map((p,i)=> i? p+cy : p+cx);
+    const p2 = arcLine.centroid(d).map((p,i)=> i? p+cy : p+cx);
     const p3 = [
       d.side === "right" ? cx + 280 : cx - 280,
       cy + d.finalY
@@ -285,7 +400,7 @@ pieSvg.append("g")
     return [p1, p2, p3];
   });
 
-// Labels
+// Final text labels
 pieSvg.append("g")
   .selectAll("text")
   .data(labels)
@@ -300,13 +415,15 @@ pieSvg.append("g")
 </script>
 
 
+
+
 <!-- ========================================================= -->
 <!-- ====================== TREND LINES ====================== -->
 <!-- ========================================================= -->
 <div id="trend" class="section">
-    <h1>Religious Trend (1965–2020)</h1>
+    <h1 style="animation: fadeInTitle 1.2s;">Religious Trend (1965–2020)</h1>
 
-    <div class="panel">
+    <div class="panel" style="animation: fadeInPanel 1.2s;">
         <svg id="trendSVG" width="600" height="400"></svg>
     </div>
 </div>
@@ -343,40 +460,21 @@ const ty = d3.scaleLinear()
 tsvg.append("g")
   .attr("transform",`translate(0,${th-tm.bottom})`)
   .call(d3.axisBottom(tx).tickFormat(d3.format("d")))
-  .selectAll("text").attr("fill","#f8d998");
+  .selectAll("text").attr("fill","#f6d98a");
 
 tsvg.append("g")
   .attr("transform",`translate(${tm.left},0)`)
   .call(d3.axisLeft(ty))
-  .selectAll("text").attr("fill","#f8d998");
+  .selectAll("text").attr("fill","#f6d98a");
 
 const religions = ["buddhist","christian","islam"];
 
 // Tooltip
 const trendTip = d3.select("body")
   .append("div")
-  .style("position","fixed")
-  .style("padding","8px 10px")
-  .style("background","#1a1a1d")
-  .style("color","#f6d98a")
-  .style("border","1px solid #f1d08f")
-  .style("border-radius","8px")
-  .style("pointer-events","none")
-  .style("opacity",0)
-  .style("font-size","13px");
+  .attr("class","tooltip");
 
-function showTrendTip(event,text){
-  trendTip.html(text)
-    .style("left",(event.clientX+15)+"px")
-    .style("top",(event.clientY-10)+"px")
-    .transition().duration(100)
-    .style("opacity",1);
-}
-function hideTrendTip(){
-  trendTip.transition().duration(150).style("opacity",0);
-}
-
-// Draw lines
+// Draw each line
 religions.forEach(key=>{
 
   const line = d3.line()
@@ -410,25 +508,27 @@ religions.forEach(key=>{
       .attr("cx",d=>tx(d.year))
       .attr("cy",d=>ty(d[key]))
       .attr("r",4)
-      .attr("fill",trendColors[key])
-      .style("transition","0.25s");
+      .attr("fill",trendColors[key]);
 
   dots.on("mouseenter", function(e,d){
       d3.select(this)
-        .transition().duration(150)
+        .transition().duration(120)
         .attr("r",7)
         .attr("fill","#fff6dc");
 
-      showTrendTip(e, `${key}: ${d[key]}%`);
+      trendTip.style("opacity",1)
+         .html(`<b>${key}</b>: ${d[key]}%`)
+         .style("left",(e.clientX+15)+"px")
+         .style("top",(e.clientY-10)+"px");
   });
 
-  dots.on("mouseleave", function(e,d){
+  dots.on("mouseleave", function(){
       d3.select(this)
-        .transition().duration(150)
+        .transition().duration(120)
         .attr("r",4)
         .attr("fill",trendColors[key]);
 
-      hideTrendTip();
+      trendTip.style("opacity",0);
   });
 
   // Legend
@@ -439,13 +539,12 @@ religions.forEach(key=>{
       .attr("fill", trendColors[key])
       .style("cursor","pointer")
       .on("click", ()=>{
+         const show = path.style("opacity") == 1 ? 0 : 1;
 
-         const currentOpacity = path.style("opacity") == 1 ? 0 : 1;
+         path.transition().duration(600).style("opacity",show);
+         dots.transition().duration(600).style("opacity",show);
 
-         path.transition().duration(600).style("opacity",currentOpacity);
-         dots.transition().duration(600).style("opacity",currentOpacity);
-
-         if(currentOpacity==1){
+         if(show == 1){
            path
              .attr("stroke-dashoffset",length)
              .transition().duration(1500)
@@ -454,15 +553,13 @@ religions.forEach(key=>{
       });
 });
 </script>
-
-
 <!-- ========================================================= -->
 <!-- ====================== ETHNICITY STACK ================== -->
 <!-- ========================================================= -->
 <div id="ethnicity" class="section">
-    <h1>Ethnicity × Religion (Census 2020)</h1>
+    <h1 style="animation: fadeInTitle 1.2s;">Ethnicity × Religion (Census 2020)</h1>
 
-    <div class="panel">
+    <div class="panel" style="animation: fadeInPanel 1.2s;">
         <svg id="stackSvg" width="760" height="420"></svg>
         <div class="tooltip" id="stackTip"></div>
     </div>
@@ -471,9 +568,9 @@ religions.forEach(key=>{
 <script>
 // ------------------------------ DATA ------------------------------
 const raceData = [
-  {race:"Chinese", Buddhist:33, Christian:20, Islam:1,  Hindu:0.4, None:20},
+  {race:"Chinese", Buddhist:33, Christian:20, Islam:1, Hindu:0.4, None:20},
   {race:"Malay",   Buddhist:1,  Christian:10, Islam:84, Hindu:0.3, None:1},
-  {race:"Indian",  Buddhist:5,  Christian:19, Islam:24, Hindu:55,  None:2},
+  {race:"Indian",  Buddhist:5,  Christian:19, Islam:24, Hindu:55, None:2},
 ];
 
 const groups = ["Buddhist","Christian","Islam","Hindu","None"];
@@ -486,7 +583,7 @@ const colors = {
   None:"#c9a35a"
 };
 
-// SVG
+// SVG settings
 const svgE = d3.select("#stackSvg");
 const EW = 760, EH = 420;
 const Em = {top:40, right:40, bottom:40, left:90};
@@ -506,14 +603,14 @@ svgE.append("g")
   .call(d3.axisLeft(ey))
   .selectAll("text").attr("fill","#f6d98a");
 
-// Stack
+// Stack data
 const stackBar = d3.stack().keys(groups);
 const layers = stackBar(raceData);
 
 // Tooltip
 const tipE = d3.select("#stackTip");
 
-// Draw rect
+// Draw bars
 layers.forEach(layer => {
   svgE.selectAll(`rect.layer-${layer.key}`)
     .data(layer)
@@ -530,7 +627,7 @@ layers.forEach(layer => {
     .attr("width", d => ex(d[1]) - ex(d[0]));
 });
 
-// Interaction
+// Hover interaction
 svgE.selectAll("rect")
   .on("mouseenter", function(event, d){
     const religion = Object.keys(d.data).find(key =>
@@ -554,7 +651,7 @@ svgE.selectAll("rect")
     tipE.style("opacity",0);
   });
 
-// Legend toggle
+// Legend toggles
 groups.forEach((key, i) => {
   svgE.append("text")
     .attr("x", EW - 120)
@@ -569,15 +666,13 @@ groups.forEach((key, i) => {
     });
 });
 </script>
-
-
 <!-- ========================================================= -->
 <!-- ====================== MAP SECTION ====================== -->
 <!-- ========================================================= -->
 <div id="mapSection" class="section">
-    <h1>Map of Major Religious Sites</h1>
+    <h1 style="animation: fadeInTitle 1.2s;">Map of Major Religious Sites</h1>
 
-    <div class="panel" style="text-align:center; margin-bottom:25px;">
+    <div class="panel" style="text-align:center; margin-bottom:25px; animation: fadeInPanel 1.2s;">
         <button onclick="loadMarkers(null)">All</button>
         <button onclick="loadMarkers('temple')">Temples</button>
         <button onclick="loadMarkers('mosque')">Mosques</button>
@@ -585,13 +680,13 @@ groups.forEach((key, i) => {
         <button onclick="loadMarkers('hindu')">Hindu Temples</button>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="animation: fadeInPanel 1.2s;">
         <div id="map"></div>
     </div>
 </div>
 
 <script>
-// Map
+// Create map
 const map = L.map("map", {scrollWheelZoom:true}).setView([1.3521,103.8198],12);
 
 L.tileLayer(
@@ -599,6 +694,7 @@ L.tileLayer(
 {}
 ).addTo(map);
 
+// Icons for sites
 const iconHTML = {
   temple:"🔱",
   mosque:"🕌",
@@ -616,7 +712,7 @@ function createIcon(type){
   });
 }
 
-// animation effect
+// Pop animation
 const styleAnim = document.createElement("style");
 styleAnim.innerHTML = `
 @keyframes popIn {
@@ -626,7 +722,7 @@ styleAnim.innerHTML = `
 }`;
 document.head.appendChild(styleAnim);
 
-// Example sites
+// Religious site data
 const sites = [
     {name:"Buddha Tooth Relic Temple", type:"temple", lat:1.2814, lng:103.8443},
     {name:"Thian Hock Keng", type:"temple", lat:1.2804, lng:103.8480},
@@ -638,6 +734,7 @@ const sites = [
 
 let markers = [];
 
+// Marker loading
 function loadMarkers(filter=null){
   markers.forEach(m=>map.removeLayer(m));
   markers = [];
@@ -658,19 +755,17 @@ function loadMarkers(filter=null){
 
 loadMarkers();
 </script>
-
-
 <!-- ========================================================= -->
 <!-- ====================== TIMELINE SECTION ================= -->
 <!-- ========================================================= -->
 <div id="timeline" class="section">
-    <h1>Religious Festivals Timeline</h1>
+    <h1 class="gold-glow-title">Religious Festivals Timeline</h1>
 
-    <div class="panel">
+    <div class="panel fade-panel">
         <svg id="timelineSVG" width="900" height="260"></svg>
     </div>
 
-    <div class="panel">
+    <div class="panel fade-panel">
         <div class="timeline-box"><b>Chinese New Year</b>: Lunar new year celebrations</div>
         <div class="timeline-box"><b>Hari Raya Aidilfitri</b>: End of Ramadan</div>
         <div class="timeline-box"><b>Vesak Day</b>: Buddha’s birth & enlightenment</div>
@@ -688,7 +783,7 @@ const festivals = [
 
 const tlSVG = d3.select("#timelineSVG");
 
-// baseline
+// baseline animation
 tlSVG.append("line")
     .attr("x1",80).attr("x2",80)
     .attr("y1",130).attr("y2",130)
@@ -701,6 +796,7 @@ const tlTip = d3.select("body").append("div").attr("class","tooltip");
 
 festivals.forEach((f,i)=>{
 
+  // circle pop
   tlSVG.append("circle")
     .attr("cx",f.x)
     .attr("cy",130)
@@ -744,6 +840,7 @@ festivals.forEach((f,i)=>{
     d3.select(this).transition().duration(200).attr("r",big);
   });
 
+  // title above
   tlSVG.append("text")
     .attr("x",f.x)
     .attr("y",110)
@@ -756,6 +853,7 @@ festivals.forEach((f,i)=>{
     .duration(600)
     .attr("opacity",1);
 
+  // date
   tlSVG.append("text")
     .attr("x",f.x)
     .attr("y",160)
@@ -770,6 +868,104 @@ festivals.forEach((f,i)=>{
 });
 </script>
 
+<!-- ========================================================= -->
+<!-- ====================== ENDING SECTION =================== -->
+<!-- ========================================================= -->
+<div class="section" style="padding:80px 60px; text-align:center;">
+    <h1 class="gold-glow-title">Thank You for Exploring</h1>
+
+    <p style="font-size:20px; max-width:700px; margin:auto; line-height:1.8; margin-top:20px;">
+        This interactive dashboard visualizes the rich religious diversity of Singapore —  
+        from population composition, ethnic patterns, historical trends, sacred landmarks,  
+        to key annual festivals.  
+        <br><br>
+        May this visual journey inspire deeper understanding  
+        of harmony, culture, and the unique spiritual mosaic of Singapore.
+    </p>
+</div>
+
+<!-- ========================================================= -->
+<!-- ====================== MAGIC CURSOR ===================== -->
+<!-- ========================================================= -->
+<style>
+.magic-cursor {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, #ffd98a, #d8b46a, transparent);
+    filter: blur(2px);
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+}
+</style>
+
+<div id="cursor" class="magic-cursor"></div>
+
+<script>
+document.addEventListener("mousemove", function(e){
+    const c = document.getElementById("cursor");
+    c.style.left = e.clientX + "px";
+    c.style.top = e.clientY + "px";
+});
+</script>
+
+<!-- ========================================================= -->
+<!-- ====================== PARTICLE TRAIL =================== -->
+<!-- ========================================================= -->
+<style>
+.particle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffebad, #d8b46a);
+    pointer-events: none;
+    filter: blur(1px);
+    z-index: 9999;
+    animation: fadeOut 0.8s forwards;
+}
+
+@keyframes fadeOut {
+  0% { opacity:1; transform: scale(1); }
+  100% { opacity:0; transform: scale(0); }
+}
+</style>
+
+<script>
+document.addEventListener("mousemove", function(e){
+    const p = document.createElement("div");
+    p.classList.add("particle");
+    p.style.left = e.clientX + "px";
+    p.style.top = e.clientY + "px";
+    document.body.appendChild(p);
+
+    setTimeout(()=>p.remove(), 800);
+});
+</script>
+
+<!-- ========================================================= -->
+<!-- ====================== ANIMATION CSS ===================== -->
+<!-- ========================================================= -->
+<style>
+@keyframes fadeInTitle {
+  0% { opacity:0; transform: translateY(-20px); }
+  100% { opacity:1; transform: translateY(0); }
+}
+@keyframes fadeInPanel {
+  0% { opacity:0; transform: translateY(30px); }
+  100% { opacity:1; transform: translateY(0); }
+}
+
+.gold-glow-title {
+  animation: fadeInTitle 1.5s ease-out;
+  text-shadow: 0 0 10px #f6d98a, 0 0 20px #caa968;
+}
+.fade-panel {
+  animation: fadeInPanel 1.2s ease-out;
+}
+</style>
 </body>
 </html>
 
